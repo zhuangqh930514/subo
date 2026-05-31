@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>溯博生物采购清单原型</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script defer src="./app.js"></script>
+  </head>
+  <body class="admin-body">
+    <div class="admin-shell">
+      <aside class="admin-sidebar">
+        <div class="admin-brand">
+          <img src="./assets/subo-logo.jpg" alt="溯博生物 logo">
+          <div class="brand-copy">
+            <div class="brand-title">溯博后台</div>
+            <div class="brand-subtitle">Procurement Prototype</div>
+          </div>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-label">总览</div>
+          <a class="nav-link" href="./admin-dashboard.html">仪表盘</a>
+          <a class="nav-link nav-link-active" href="./admin-procurement.html">采购清单</a>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-label">经营</div>
+          <a class="nav-link" href="#">询价管理</a>
+          <a class="nav-link" href="#">订单管理</a>
+          <a class="nav-link" href="#">客户管理</a>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-label">目录</div>
+          <a class="nav-link" href="#">供应商链接</a>
+          <a class="nav-link" href="#">平台配置</a>
+        </div>
+      </aside>
+
+      <main class="admin-main">
+        <div class="admin-topbar">
+          <div>
+            <div class="eyebrow">Procurement List</div>
+            <h1 class="section-title">把锐竟和喀斯玛并进一个池里，但生成清单动作原样保留</h1>
+          </div>
+          <div class="admin-actions">
+            <span class="admin-note">必须保留：生成清单</span>
+            <a class="button button-secondary" href="./quote-center.html">查看代采需求入口</a>
+          </div>
+        </div>
+
+        <section class="procurement-layout">
+          <article class="admin-card table-panel">
+            <div class="table-toolbar">
+              <div class="segmented">
+                <button class="segment segment-active" data-platform-filter="全部" type="button">全部</button>
+                <button class="segment" data-platform-filter="锐竟" type="button">锐竟</button>
+                <button class="segment" data-platform-filter="喀斯玛" type="button">喀斯玛</button>
+              </div>
+              <div class="actions">
+                <button class="button button-secondary" type="button">搜索商品</button>
+                <button class="button button-primary" type="button">生成采购清单</button>
+              </div>
+            </div>
+            <table class="list-table">
+              <thead>
+                <tr>
+                  <th class="checkbox-cell"></th>
+                  <th>产品名称</th>
+                  <th>平台</th>
+                  <th>类型</th>
+                  <th>规格</th>
+                  <th>单价</th>
+                  <th>动作</th>
+                </tr>
+              </thead>
+              <tbody data-procurement-body></tbody>
+            </table>
+          </article>
+
+          <aside class="summary-panel panel">
+            <div class="summary-grid">
+              <div class="summary-card">
+                <span>已选条目</span>
+                <strong class="summary-value" data-procurement-count>0 项</strong>
+              </div>
+              <div class="summary-card">
+                <span>预估合计</span>
+                <strong class="summary-value" data-procurement-total>¥0</strong>
+              </div>
+            </div>
+
+            <div>
+              <h3>待生成清单</h3>
+              <div class="mini-list" data-procurement-selected></div>
+            </div>
+
+            <div>
+              <h3>清单参数</h3>
+              <div class="mini-list">
+                <select class="select">
+                  <option>关联询价：广东省人民医院代采需求</option>
+                  <option>关联询价：南方医科大学代采需求</option>
+                </select>
+                <select class="select">
+                  <option>导出格式：Excel</option>
+                  <option>导出格式：内部预览</option>
+                </select>
+                <textarea class="textarea" placeholder="清单备注、供货要求、开票说明"></textarea>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="button button-secondary" type="button">保存草稿</button>
+              <button class="button button-primary" type="button">导出清单</button>
+            </div>
+          </aside>
+        </section>
+
+        <section class="split-grid">
+          <article class="admin-card">
+            <div class="section-header">
+              <div>
+                <h3>最近生成记录</h3>
+                <p>新的后台里，这里既是导出记录，也是采购动作追踪点。</p>
+              </div>
+            </div>
+            <table class="list-table">
+              <thead>
+                <tr>
+                  <th>清单编号</th>
+                  <th>平台</th>
+                  <th>关联订单</th>
+                  <th>状态</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>PL-202605-018</td>
+                  <td>锐竟</td>
+                  <td>SO-202605-010</td>
+                  <td><span class="badge">已导出</span></td>
+                </tr>
+                <tr>
+                  <td>PL-202605-017</td>
+                  <td>喀斯玛</td>
+                  <td>SO-202605-008</td>
+                  <td><span class="badge badge-accent">待跟进</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+
+          <article class="admin-card">
+            <div class="section-header">
+              <div>
+                <h3>为什么这个页最关键</h3>
+                <p>它直接决定旧后台最实用的能力是否被完整迁移。</p>
+              </div>
+            </div>
+            <div class="mini-list">
+              <div class="mini-item">
+                <div>
+                  <strong>平台统一，动作不丢</strong>
+                  <div class="admin-meta">锐竟 / 喀斯玛合并为平台字段，而不是两个独立菜单。</div>
+                </div>
+              </div>
+              <div class="mini-item">
+                <div>
+                  <strong>导出成为正式功能</strong>
+                  <div class="admin-meta">清单可关联询价、订单、客户和导出文件记录。</div>
+                </div>
+              </div>
+              <div class="mini-item">
+                <div>
+                  <strong>后续可继续扩平台</strong>
+                  <div class="admin-meta">新增其它供应商时，只需要加平台和链接，不需要再复制整个模块。</div>
+                </div>
+              </div>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

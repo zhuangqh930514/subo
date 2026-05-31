@@ -1,0 +1,14 @@
+{
+  "name": "subo-platform",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.30.3",
+  "scripts": {
+    "dev:web": "pnpm --filter @subo/web dev",
+    "dev:admin": "pnpm --filter @subo/admin dev",
+    "dev:api": "pnpm --filter @subo/api start:dev",
+    "build": "pnpm -r --if-present build",
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm -r --if-present typecheck"
+  }
+}

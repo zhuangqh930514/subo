@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>溯博生物报价中心原型</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script defer src="./app.js"></script>
+  </head>
+  <body class="screen-body">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <img class="brand-mark" src="./assets/subo-logo.jpg" alt="溯博生物 logo">
+          <div class="brand-copy">
+            <div class="brand-title">报价中心原型</div>
+            <div class="brand-subtitle">技术服务报价 + 代采需求提交</div>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="button button-secondary" href="./website-home.html">官网首页</a>
+          <a class="button button-primary" href="./admin-dashboard.html">后台承接</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-head">
+        <div class="section-inner">
+          <div class="page-head-grid">
+            <div>
+              <div class="eyebrow">Quote Center</div>
+              <h1 class="section-title">一个入口承接两类咨询，但交互方式要分开</h1>
+              <p class="section-copy">
+                技术服务继续走目录化报价；试剂耗材代采不做商城，而是以需求表单进入商务处理。这样既保留了现有报价系统的优势，也不会把代采做成不适合的零售站。
+              </p>
+            </div>
+            <div class="segmented">
+              <button class="segment segment-active" data-mode="service" type="button">技术服务报价</button>
+              <button class="segment" data-mode="procurement" type="button">代采需求提交</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" data-section="service">
+        <div class="section-inner quote-layout">
+          <aside class="sidebar">
+            <div class="panel">
+              <h3>快速筛选</h3>
+              <input class="search-input" type="search" placeholder="搜索项目、货号、规格">
+            </div>
+            <div class="panel">
+              <h3>分类</h3>
+              <div class="segmented">
+                <button class="segment segment-active" data-filter="全部" type="button">全部</button>
+                <button class="segment" data-filter="动物实验" type="button">动物实验</button>
+                <button class="segment" data-filter="蛋白" type="button">蛋白</button>
+                <button class="segment" data-filter="细胞" type="button">细胞</button>
+                <button class="segment" data-filter="病理图像（切片扫描）" type="button">切片扫描</button>
+              </div>
+            </div>
+            <div class="panel">
+              <h3>报价说明</h3>
+              <p>复杂项目由商务进一步确认。前台只做初步组合与提交，不直接形成正式订单。</p>
+            </div>
+          </aside>
+
+          <div class="quote-board" data-service-list></div>
+
+          <aside class="summary-panel panel">
+            <div class="summary-grid">
+              <div class="summary-card">
+                <span>已选条目</span>
+                <strong class="summary-value" data-selected-count>0 项</strong>
+              </div>
+              <div class="summary-card">
+                <span>预估合计</span>
+                <strong class="summary-value" data-selected-total>¥0</strong>
+              </div>
+            </div>
+            <div>
+              <h3>报价单摘要</h3>
+              <div class="quote-line-list" data-selected-list></div>
+            </div>
+            <div>
+              <h3>客户信息</h3>
+              <div class="mini-list">
+                <input class="field" type="text" placeholder="姓名">
+                <input class="field" type="text" placeholder="单位或课题组">
+                <input class="field" type="text" placeholder="手机、微信或邮箱">
+                <textarea class="textarea" placeholder="样本数量、检测指标、交付要求"></textarea>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="button button-secondary" type="button">复制询价内容</button>
+              <button class="button button-primary" type="button">提交询价</button>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section hidden" data-section="procurement">
+        <div class="section-inner">
+          <div class="procurement-grid">
+            <div class="panel">
+              <h3>代采需求表单</h3>
+              <p class="section-copy">适合客户已经明确品牌、货号、规格或平台偏好的场景，不必把整个代采流程塞进技术服务报价目录。</p>
+              <div class="mini-list">
+                <input class="field" type="text" placeholder="品牌 / 产品名称">
+                <input class="field" type="text" placeholder="货号 / Catalog No.">
+                <div class="filter-row">
+                  <select class="select">
+                    <option>平台偏好：不限</option>
+                    <option>锐竟</option>
+                    <option>喀斯玛</option>
+                  </select>
+                  <select class="select">
+                    <option>需求类型：试剂耗材代采</option>
+                    <option>仪器配件</option>
+                    <option>特殊询源</option>
+                  </select>
+                </div>
+                <textarea class="textarea" placeholder="数量、规格、交期、开票要求、收货要求"></textarea>
+                <input class="field" type="text" placeholder="姓名">
+                <input class="field" type="text" placeholder="单位">
+                <input class="field" type="text" placeholder="联系方式">
+              </div>
+              <div class="actions" style="margin-top: 16px;">
+                <button class="button button-primary" type="button">提交代采需求</button>
+              </div>
+            </div>
+            <div class="panel">
+              <h3>为什么单独分开</h3>
+              <div class="mini-list">
+                <div class="mini-item">
+                  <div>
+                    <strong>技术服务有固定目录</strong>
+                    <div class="admin-meta">适合检索、筛选、加入报价单</div>
+                  </div>
+                </div>
+                <div class="mini-item">
+                  <div>
+                    <strong>代采需求更像商务沟通</strong>
+                    <div class="admin-meta">适合提交需求后由后台匹配供应商链接和生成清单</div>
+                  </div>
+                </div>
+                <div class="mini-item">
+                  <div>
+                    <strong>后台能统一承接</strong>
+                    <div class="admin-meta">询价管理里用业务类型区分 service / procurement / mixed</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <span>Prototype · 溯博生物报价中心</span>
+        <a href="./index.html">返回总览</a>
+      </div>
+    </footer>
+  </body>
+</html>

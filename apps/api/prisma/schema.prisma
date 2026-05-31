@@ -1,0 +1,461 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum RecordStatus {
+  ACTIVE   @map("active")
+  INACTIVE @map("inactive")
+  ARCHIVED @map("archived")
+}
+
+enum CustomerType {
+  COMPANY    @map("company")
+  INDIVIDUAL @map("individual")
+}
+
+enum BusinessType {
+  SERVICE     @map("service")
+  PROCUREMENT @map("procurement")
+  MIXED       @map("mixed")
+}
+
+enum QuoteRequestSource {
+  QUOTE_CENTER @map("quote_center")
+  CONTACT_FORM @map("contact_form")
+  MANUAL       @map("manual")
+}
+
+enum QuoteRequestStatus {
+  PENDING    @map("pending")
+  PROCESSING @map("processing")
+  CONVERTED  @map("converted")
+  CLOSED     @map("closed")
+}
+
+enum OrderType {
+  SERVICE     @map("service")
+  PROCUREMENT @map("procurement")
+}
+
+enum ProcurementListStatus {
+  DRAFT     @map("draft")
+  GENERATED @map("generated")
+  EXPORTED  @map("exported")
+  CLOSED    @map("closed")
+}
+
+enum AdminUserStatus {
+  ACTIVE   @map("active")
+  DISABLED @map("disabled")
+}
+
+model SiteProfile {
+  id            Int      @id @default(1) @db.UnsignedInt
+  companyName   String   @map("company_name") @db.VarChar(160)
+  brandSubtitle String?  @map("brand_subtitle") @db.VarChar(160)
+  eyebrow       String?  @db.VarChar(120)
+  heroTitle     String?  @map("hero_title") @db.VarChar(255)
+  heroSummary   String?  @map("hero_summary") @db.Text
+  intro         String?  @db.Text
+  taxNumber     String?  @map("tax_number") @db.VarChar(64)
+  address       String?  @db.VarChar(255)
+  phone         String?  @db.VarChar(32)
+  mobile        String?  @db.VarChar(32)
+  email         String?  @db.VarChar(160)
+  bankName      String?  @map("bank_name") @db.VarChar(160)
+  bankAccount   String?  @map("bank_account") @db.VarChar(100)
+  logoUrl       String?  @map("logo_url") @db.VarChar(500)
+  createdAt     DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.DateTime(0)
+
+  @@map("site_profile")
+}
+
+model ServiceCategory {
+  id          Int              @id @default(autoincrement()) @db.UnsignedInt
+  name        String           @db.VarChar(100)
+  slug        String           @unique @db.VarChar(120)
+  description String?          @db.Text
+  sortOrder   Int              @default(0) @map("sort_order") @db.UnsignedInt
+  status      RecordStatus     @default(ACTIVE)
+  projects    ServiceProject[]
+  items       ServiceItem[]
+  createdAt   DateTime         @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt   DateTime         @updatedAt @map("updated_at") @db.DateTime(0)
+  createdBy   Int?             @map("created_by") @db.UnsignedInt
+  updatedBy   Int?             @map("updated_by") @db.UnsignedInt
+  deletedAt   DateTime?        @map("deleted_at") @db.DateTime(0)
+
+  @@index([status, sortOrder], map: "idx_service_categories_status_sort_order")
+  @@map("service_categories")
+}
+
+model ServiceProject {
+  id          Int             @id @default(autoincrement()) @db.UnsignedInt
+  categoryId  Int             @map("category_id") @db.UnsignedInt
+  name        String          @db.VarChar(120)
+  description String?         @db.Text
+  sortOrder   Int             @default(0) @map("sort_order") @db.UnsignedInt
+  status      RecordStatus    @default(ACTIVE)
+  category    ServiceCategory @relation(fields: [categoryId], references: [id])
+  items       ServiceItem[]
+  createdAt   DateTime        @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt   DateTime        @updatedAt @map("updated_at") @db.DateTime(0)
+  createdBy   Int?            @map("created_by") @db.UnsignedInt
+  updatedBy   Int?            @map("updated_by") @db.UnsignedInt
+  deletedAt   DateTime?       @map("deleted_at") @db.DateTime(0)
+
+  @@index([categoryId, status, sortOrder], map: "idx_service_projects_category_status_sort_order")
+  @@map("service_projects")
+}
+
+model ServiceItem {
+  id                Int                @id @default(autoincrement()) @db.UnsignedInt
+  categoryId        Int                @map("category_id") @db.UnsignedInt
+  projectId         Int                @map("project_id") @db.UnsignedInt
+  itemCode          String             @unique @map("item_code") @db.VarChar(64)
+  name              String             @db.VarChar(160)
+  specification     String?            @db.Text
+  unitPrice         Decimal            @default(0) @map("unit_price") @db.Decimal(12, 2)
+  priceNote         String?            @map("price_note") @db.VarChar(255)
+  status            RecordStatus       @default(ACTIVE)
+  sourceVersion     String?            @map("source_version") @db.VarChar(100)
+  category          ServiceCategory    @relation(fields: [categoryId], references: [id])
+  project           ServiceProject     @relation(fields: [projectId], references: [id])
+  quoteRequestItems QuoteRequestItem[]
+  createdAt         DateTime           @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
+  createdBy         Int?               @map("created_by") @db.UnsignedInt
+  updatedBy         Int?               @map("updated_by") @db.UnsignedInt
+  deletedAt         DateTime?          @map("deleted_at") @db.DateTime(0)
+
+  @@index([categoryId, projectId, status], map: "idx_service_items_category_project_status")
+  @@map("service_items")
+}
+
+model Customer {
+  id               Int               @id @default(autoincrement()) @db.UnsignedInt
+  name             String            @db.VarChar(160)
+  customerType     CustomerType?     @map("customer_type")
+  source           String?           @db.VarChar(80)
+  industry         String?           @db.VarChar(120)
+  address          String?           @db.VarChar(255)
+  remark           String?           @db.Text
+  quoteRequests    QuoteRequest[]
+  invoiceProfiles  InvoiceProfile[]
+  orders           Order[]
+  contracts        Contract[]
+  procurementLists ProcurementList[]
+  createdAt        DateTime          @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.DateTime(0)
+  createdBy        Int?              @map("created_by") @db.UnsignedInt
+  updatedBy        Int?              @map("updated_by") @db.UnsignedInt
+  deletedAt        DateTime?         @map("deleted_at") @db.DateTime(0)
+
+  @@index([name], map: "idx_customers_name")
+  @@map("customers")
+}
+
+model InvoiceProfile {
+  id          Int       @id @default(autoincrement()) @db.UnsignedInt
+  customerId  Int       @map("customer_id") @db.UnsignedInt
+  companyName String    @map("company_name") @db.VarChar(160)
+  taxNumber   String    @map("tax_number") @db.VarChar(64)
+  address     String?   @db.VarChar(255)
+  phone       String?   @db.VarChar(32)
+  bankName    String?   @map("bank_name") @db.VarChar(160)
+  bankAccount String?   @map("bank_account") @db.VarChar(100)
+  isDefault   Boolean   @default(false) @map("is_default")
+  customer    Customer  @relation(fields: [customerId], references: [id])
+  orders      Order[]
+  createdAt   DateTime  @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.DateTime(0)
+  createdBy   Int?      @map("created_by") @db.UnsignedInt
+  updatedBy   Int?      @map("updated_by") @db.UnsignedInt
+  deletedAt   DateTime? @map("deleted_at") @db.DateTime(0)
+
+  @@index([companyName, taxNumber], map: "idx_invoice_profiles_company_name_tax_number")
+  @@map("invoice_profiles")
+}
+
+model QuoteRequest {
+  id                   Int                @id @default(autoincrement()) @db.UnsignedInt
+  quoteNo              String             @unique @map("quote_no") @db.VarChar(64)
+  customerId           Int?               @map("customer_id") @db.UnsignedInt
+  contactName          String             @map("contact_name") @db.VarChar(120)
+  contactPhone         String?            @map("contact_phone") @db.VarChar(32)
+  contactEmail         String?            @map("contact_email") @db.VarChar(160)
+  companyName          String?            @map("company_name") @db.VarChar(160)
+  businessType         BusinessType       @default(SERVICE) @map("business_type")
+  source               QuoteRequestSource @default(QUOTE_CENTER)
+  remark               String?            @db.Text
+  estimatedTotalAmount Decimal            @default(0) @map("estimated_total_amount") @db.Decimal(12, 2)
+  status               QuoteRequestStatus @default(PENDING)
+  ownerUserId          Int?               @map("owner_user_id") @db.UnsignedInt
+  customer             Customer?          @relation(fields: [customerId], references: [id])
+  ownerUser            AdminUser?         @relation("QuoteRequestOwner", fields: [ownerUserId], references: [id])
+  items                QuoteRequestItem[]
+  orders               Order[]
+  procurementLists     ProcurementList[]
+  createdAt            DateTime           @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt            DateTime           @updatedAt @map("updated_at") @db.DateTime(0)
+  createdBy            Int?               @map("created_by") @db.UnsignedInt
+  updatedBy            Int?               @map("updated_by") @db.UnsignedInt
+  deletedAt            DateTime?          @map("deleted_at") @db.DateTime(0)
+
+  @@index([status, source, ownerUserId], map: "idx_quote_requests_status_source_owner_user_id")
+  @@map("quote_requests")
+}
+
+model QuoteRequestItem {
+  id             Int          @id @default(autoincrement()) @db.UnsignedInt
+  quoteRequestId Int          @map("quote_request_id") @db.UnsignedInt
+  serviceItemId  Int?         @map("service_item_id") @db.UnsignedInt
+  itemName       String       @map("item_name") @db.VarChar(160)
+  itemCode       String?      @map("item_code") @db.VarChar(64)
+  specification  String?      @db.Text
+  unitPrice      Decimal      @default(0) @map("unit_price") @db.Decimal(12, 2)
+  quantity       Decimal      @default(1) @db.Decimal(12, 2)
+  subtotal       Decimal      @default(0) @db.Decimal(12, 2)
+  quoteRequest   QuoteRequest @relation(fields: [quoteRequestId], references: [id])
+  serviceItem    ServiceItem? @relation(fields: [serviceItemId], references: [id])
+  createdAt      DateTime     @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.DateTime(0)
+  createdBy      Int?         @map("created_by") @db.UnsignedInt
+  updatedBy      Int?         @map("updated_by") @db.UnsignedInt
+
+  @@index([quoteRequestId], map: "idx_quote_request_items_quote_request_id")
+  @@map("quote_request_items")
+}
+
+model Order {
+  id               Int               @id @default(autoincrement()) @db.UnsignedInt
+  orderNo          String            @unique @map("order_no") @db.VarChar(64)
+  customerId       Int               @map("customer_id") @db.UnsignedInt
+  quoteRequestId   Int?              @map("quote_request_id") @db.UnsignedInt
+  orderType        OrderType         @default(SERVICE) @map("order_type")
+  projectName      String            @map("project_name") @db.VarChar(160)
+  projectContent   String?           @map("project_content") @db.Text
+  amount           Decimal           @default(0) @db.Decimal(12, 2)
+  hasContract      Boolean           @default(false) @map("has_contract")
+  hasDeliveryNote  Boolean           @default(false) @map("has_delivery_note")
+  isPaid           Boolean           @default(false) @map("is_paid")
+  orderDate        DateTime?         @map("order_date") @db.Date
+  invoiceProfileId Int?              @map("invoice_profile_id") @db.UnsignedInt
+  ownerUserId      Int?              @map("owner_user_id") @db.UnsignedInt
+  remark           String?           @db.Text
+  customer         Customer          @relation(fields: [customerId], references: [id])
+  quoteRequest     QuoteRequest?     @relation(fields: [quoteRequestId], references: [id])
+  invoiceProfile   InvoiceProfile?   @relation(fields: [invoiceProfileId], references: [id])
+  ownerUser        AdminUser?        @relation("OrderOwner", fields: [ownerUserId], references: [id])
+  contracts        Contract[]
+  procurementLists ProcurementList[]
+  createdAt        DateTime          @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.DateTime(0)
+  createdBy        Int?              @map("created_by") @db.UnsignedInt
+  updatedBy        Int?              @map("updated_by") @db.UnsignedInt
+  deletedAt        DateTime?         @map("deleted_at") @db.DateTime(0)
+
+  @@index([orderType, orderDate, isPaid], map: "idx_orders_order_type_order_date_is_paid")
+  @@map("orders")
+}
+
+model Contract {
+  id               Int       @id @default(autoincrement()) @db.UnsignedInt
+  orderId          Int?      @map("order_id") @db.UnsignedInt
+  customerId       Int?      @map("customer_id") @db.UnsignedInt
+  legacyContractId Int?      @unique @map("legacy_contract_id") @db.UnsignedInt
+  contractName     String    @map("contract_name") @db.VarChar(160)
+  description      String?   @db.Text
+  fileName         String    @map("file_name") @db.VarChar(255)
+  filePath         String?   @map("file_path") @db.VarChar(500)
+  fileType         String?   @map("file_type") @db.VarChar(80)
+  fileSize         BigInt?   @map("file_size") @db.UnsignedBigInt
+  storageProvider  String?   @map("storage_provider") @db.VarChar(80)
+  source           String?   @db.VarChar(80)
+  versionNo        Int       @default(1) @map("version_no") @db.UnsignedInt
+  uploadedBy       Int?      @map("uploaded_by") @db.UnsignedInt
+  order            Order?    @relation(fields: [orderId], references: [id])
+  customer         Customer? @relation(fields: [customerId], references: [id])
+  createdAt        DateTime  @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.DateTime(0)
+  createdBy        Int?      @map("created_by") @db.UnsignedInt
+  updatedBy        Int?      @map("updated_by") @db.UnsignedInt
+  deletedAt        DateTime? @map("deleted_at") @db.DateTime(0)
+
+  @@index([orderId, deletedAt], map: "idx_contracts_order_id_deleted_at")
+  @@index([customerId, deletedAt], map: "idx_contracts_customer_id_deleted_at")
+  @@index([source, deletedAt], map: "idx_contracts_source_deleted_at")
+  @@map("contracts")
+}
+
+model SupplierPlatform {
+  id               Int               @id @default(autoincrement()) @db.UnsignedInt
+  code             String            @unique @db.VarChar(64)
+  name             String            @db.VarChar(100)
+  status           RecordStatus      @default(ACTIVE)
+  links            SupplierLink[]
+  procurementLists ProcurementList[]
+  createdAt        DateTime          @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.DateTime(0)
+  createdBy        Int?              @map("created_by") @db.UnsignedInt
+  updatedBy        Int?              @map("updated_by") @db.UnsignedInt
+  deletedAt        DateTime?         @map("deleted_at") @db.DateTime(0)
+
+  @@map("supplier_platforms")
+}
+
+model SupplierLink {
+  id                   Int                   @id @default(autoincrement()) @db.UnsignedInt
+  platformId           Int                   @map("platform_id") @db.UnsignedInt
+  productName          String                @map("product_name") @db.VarChar(160)
+  productCode          String?               @map("product_code") @db.VarChar(64)
+  productType          String?               @map("product_type") @db.VarChar(80)
+  saleUnit             String?               @map("sale_unit") @db.VarChar(64)
+  specification        String?               @db.Text
+  unitPrice            Decimal               @default(0) @map("unit_price") @db.Decimal(12, 2)
+  purchaseUrl          String                @map("purchase_url") @db.VarChar(500)
+  imageUrl             String?               @map("image_url") @db.VarChar(500)
+  status               RecordStatus          @default(ACTIVE)
+  platform             SupplierPlatform      @relation(fields: [platformId], references: [id])
+  procurementListItems ProcurementListItem[]
+  createdAt            DateTime              @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt            DateTime              @updatedAt @map("updated_at") @db.DateTime(0)
+  createdBy            Int?                  @map("created_by") @db.UnsignedInt
+  updatedBy            Int?                  @map("updated_by") @db.UnsignedInt
+  deletedAt            DateTime?             @map("deleted_at") @db.DateTime(0)
+
+  @@index([platformId, productCode], map: "idx_supplier_links_platform_id_product_code")
+  @@map("supplier_links")
+}
+
+model ProcurementList {
+  id             Int                   @id @default(autoincrement()) @db.UnsignedInt
+  listNo         String                @unique @map("list_no") @db.VarChar(64)
+  platformId     Int                   @map("platform_id") @db.UnsignedInt
+  orderId        Int?                  @map("order_id") @db.UnsignedInt
+  quoteRequestId Int?                  @map("quote_request_id") @db.UnsignedInt
+  customerId     Int?                  @map("customer_id") @db.UnsignedInt
+  title          String                @db.VarChar(160)
+  remark         String?               @db.Text
+  status         ProcurementListStatus @default(DRAFT)
+  exportFileUrl  String?               @map("export_file_url") @db.VarChar(500)
+  platform       SupplierPlatform      @relation(fields: [platformId], references: [id])
+  order          Order?                @relation(fields: [orderId], references: [id])
+  quoteRequest   QuoteRequest?         @relation(fields: [quoteRequestId], references: [id])
+  customer       Customer?             @relation(fields: [customerId], references: [id])
+  items          ProcurementListItem[]
+  createdAt      DateTime              @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt      DateTime              @updatedAt @map("updated_at") @db.DateTime(0)
+  createdBy      Int?                  @map("created_by") @db.UnsignedInt
+  updatedBy      Int?                  @map("updated_by") @db.UnsignedInt
+  deletedAt      DateTime?             @map("deleted_at") @db.DateTime(0)
+
+  @@index([platformId, orderId], map: "idx_procurement_lists_platform_id_order_id")
+  @@map("procurement_lists")
+}
+
+model ProcurementListItem {
+  id                Int             @id @default(autoincrement()) @db.UnsignedInt
+  procurementListId Int             @map("procurement_list_id") @db.UnsignedInt
+  supplierLinkId    Int?            @map("supplier_link_id") @db.UnsignedInt
+  productName       String          @map("product_name") @db.VarChar(160)
+  productCode       String?         @map("product_code") @db.VarChar(64)
+  productType       String?         @map("product_type") @db.VarChar(80)
+  saleUnit          String?         @map("sale_unit") @db.VarChar(64)
+  specification     String?         @db.Text
+  unitPrice         Decimal         @default(0) @map("unit_price") @db.Decimal(12, 2)
+  quantity          Decimal         @default(1) @db.Decimal(12, 2)
+  subtotal          Decimal         @default(0) @db.Decimal(12, 2)
+  purchaseUrl       String?         @map("purchase_url") @db.VarChar(500)
+  remark            String?         @db.Text
+  procurementList   ProcurementList @relation(fields: [procurementListId], references: [id])
+  supplierLink      SupplierLink?   @relation(fields: [supplierLinkId], references: [id])
+  createdAt         DateTime        @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.DateTime(0)
+  createdBy         Int?            @map("created_by") @db.UnsignedInt
+  updatedBy         Int?            @map("updated_by") @db.UnsignedInt
+
+  @@index([procurementListId], map: "idx_procurement_list_items_procurement_list_id")
+  @@map("procurement_list_items")
+}
+
+model AdminUser {
+  id                 Int              @id @default(autoincrement()) @db.UnsignedInt
+  username           String           @unique @db.VarChar(64)
+  passwordHash       String           @map("password_hash") @db.VarChar(255)
+  nickname           String?          @db.VarChar(100)
+  email              String?          @db.VarChar(160)
+  phone              String?          @db.VarChar(32)
+  status             AdminUserStatus  @default(ACTIVE)
+  lastLoginAt        DateTime?        @map("last_login_at") @db.DateTime(0)
+  ownedQuoteRequests QuoteRequest[]   @relation("QuoteRequestOwner")
+  ownedOrders        Order[]          @relation("OrderOwner")
+  roles              AdminUserRole[]
+  actionLogs         AdminActionLog[] @relation("AdminActionLogActor")
+  createdAt          DateTime         @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt          DateTime         @updatedAt @map("updated_at") @db.DateTime(0)
+  createdBy          Int?             @map("created_by") @db.UnsignedInt
+  updatedBy          Int?             @map("updated_by") @db.UnsignedInt
+  deletedAt          DateTime?        @map("deleted_at") @db.DateTime(0)
+
+  @@map("admin_users")
+}
+
+model AdminRole {
+  id          Int             @id @default(autoincrement()) @db.UnsignedInt
+  code        String          @unique @db.VarChar(64)
+  name        String          @db.VarChar(100)
+  description String?         @db.VarChar(255)
+  status      RecordStatus    @default(ACTIVE)
+  isBuiltIn   Boolean         @default(true) @map("is_built_in")
+  users       AdminUserRole[]
+  createdAt   DateTime        @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt   DateTime        @updatedAt @map("updated_at") @db.DateTime(0)
+  createdBy   Int?            @map("created_by") @db.UnsignedInt
+  updatedBy   Int?            @map("updated_by") @db.UnsignedInt
+  deletedAt   DateTime?       @map("deleted_at") @db.DateTime(0)
+
+  @@index([status, deletedAt], map: "idx_admin_roles_status_deleted_at")
+  @@map("admin_roles")
+}
+
+model AdminUserRole {
+  id         Int       @id @default(autoincrement()) @db.UnsignedInt
+  userId     Int       @map("user_id") @db.UnsignedInt
+  roleId     Int       @map("role_id") @db.UnsignedInt
+  assignedBy Int?      @map("assigned_by") @db.UnsignedInt
+  user       AdminUser @relation(fields: [userId], references: [id])
+  role       AdminRole @relation(fields: [roleId], references: [id])
+  createdAt  DateTime  @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.DateTime(0)
+
+  @@unique([userId, roleId], map: "uniq_admin_user_roles_user_id_role_id")
+  @@index([roleId], map: "idx_admin_user_roles_role_id")
+  @@map("admin_user_roles")
+}
+
+model AdminActionLog {
+  id               Int        @id @default(autoincrement()) @db.UnsignedInt
+  actorUserId      Int?       @map("actor_user_id") @db.UnsignedInt
+  actorUsername    String     @map("actor_username") @db.VarChar(64)
+  actorDisplayName String?    @map("actor_display_name") @db.VarChar(100)
+  action           String     @db.VarChar(80)
+  targetType       String     @map("target_type") @db.VarChar(64)
+  targetId         String?    @map("target_id") @db.VarChar(64)
+  targetLabel      String?    @map("target_label") @db.VarChar(160)
+  summary          String     @db.VarChar(255)
+  detail           Json?
+  ipAddress        String?    @map("ip_address") @db.VarChar(64)
+  userAgent        String?    @map("user_agent") @db.VarChar(255)
+  actorUser        AdminUser? @relation("AdminActionLogActor", fields: [actorUserId], references: [id])
+  createdAt        DateTime   @default(now()) @map("created_at") @db.DateTime(0)
+
+  @@index([actorUserId, createdAt], map: "idx_admin_action_logs_actor_user_id_created_at")
+  @@index([targetType, createdAt], map: "idx_admin_action_logs_target_type_created_at")
+  @@map("admin_action_logs")
+}

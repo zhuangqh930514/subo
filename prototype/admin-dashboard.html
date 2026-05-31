@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>溯博生物后台仪表盘原型</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body class="admin-body">
+    <div class="admin-shell">
+      <aside class="admin-sidebar">
+        <div class="admin-brand">
+          <img src="./assets/subo-logo.jpg" alt="溯博生物 logo">
+          <div class="brand-copy">
+            <div class="brand-title">溯博后台</div>
+            <div class="brand-subtitle">Admin Prototype</div>
+          </div>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-label">总览</div>
+          <a class="nav-link nav-link-active" href="./admin-dashboard.html">仪表盘</a>
+          <a class="nav-link" href="./admin-procurement.html">采购清单</a>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-label">经营</div>
+          <a class="nav-link" href="#">询价管理</a>
+          <a class="nav-link" href="#">订单管理</a>
+          <a class="nav-link" href="#">客户管理</a>
+          <a class="nav-link" href="#">合同管理</a>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-label">内容与目录</div>
+          <a class="nav-link" href="#">官网内容</a>
+          <a class="nav-link" href="#">服务目录</a>
+          <a class="nav-link" href="#">供应商链接</a>
+        </div>
+      </aside>
+
+      <main class="admin-main">
+        <div class="admin-topbar">
+          <div>
+            <div class="eyebrow">Dashboard</div>
+            <h1 class="section-title">新后台首页不是炫图，而是经营动作的控制台</h1>
+          </div>
+          <div class="admin-actions">
+            <span class="admin-note">主域名应切回官网</span>
+            <a class="button button-secondary" href="./quote-center.html">查看前台询价入口</a>
+          </div>
+        </div>
+
+        <section class="metric-grid">
+          <article class="admin-card metric-card">
+            <span class="metric-caption">待跟进询价</span>
+            <strong class="metric-value">18</strong>
+            <div class="admin-meta">技术服务 11 · 代采 7</div>
+          </article>
+          <article class="admin-card metric-card">
+            <span class="metric-caption">本月技术服务订单</span>
+            <strong class="metric-value">¥92,650</strong>
+            <div class="admin-meta">来源于询价中心与手工录入</div>
+          </article>
+          <article class="admin-card metric-card">
+            <span class="metric-caption">本月代采订单</span>
+            <strong class="metric-value">¥70,900</strong>
+            <div class="admin-meta">由采购清单转单 6 笔</div>
+          </article>
+          <article class="admin-card metric-card">
+            <span class="metric-caption">待处理合同 / 发票</span>
+            <strong class="metric-value">9</strong>
+            <div class="admin-meta">合同 4 · 发票资料 5</div>
+          </article>
+        </section>
+
+        <section class="dashboard-grid">
+          <article class="admin-card">
+            <div class="section-header">
+              <div>
+                <h3>订单结构</h3>
+                <p>首页直接把两条业务线拆开看，避免旧后台那种混着录、混着查。</p>
+              </div>
+              <span class="badge badge-accent">service vs procurement</span>
+            </div>
+            <div class="chart">
+              <div class="bars">
+                <div class="bar-row">
+                  <span>技术服务订单</span>
+                  <div class="bar-track"><div class="bar-fill" style="width: 78%;"></div></div>
+                  <strong>78%</strong>
+                </div>
+                <div class="bar-row">
+                  <span>代采订单</span>
+                  <div class="bar-track"><div class="bar-fill" style="width: 52%; background: linear-gradient(90deg, #16b788, #18c7e8);"></div></div>
+                  <strong>52%</strong>
+                </div>
+                <div class="bar-row">
+                  <span>待转正式订单</span>
+                  <div class="bar-track"><div class="bar-fill" style="width: 34%; background: linear-gradient(90deg, #e39f2b, #18c7e8);"></div></div>
+                  <strong>34%</strong>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="admin-card">
+            <div class="section-header">
+              <div>
+                <h3>线索来源</h3>
+                <p>报价中心、官网留言和手工录入统一汇总。</p>
+              </div>
+            </div>
+            <table class="list-table">
+              <thead>
+                <tr>
+                  <th>来源</th>
+                  <th>数量</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>报价中心</td>
+                  <td>12</td>
+                  <td>技术服务为主</td>
+                </tr>
+                <tr>
+                  <td>代采需求</td>
+                  <td>4</td>
+                  <td>来自官网独立表单</td>
+                </tr>
+                <tr>
+                  <td>官网留言</td>
+                  <td>2</td>
+                  <td>一般商务咨询</td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+        </section>
+
+        <section class="split-grid">
+          <article class="admin-card">
+            <div class="section-header">
+              <div>
+                <h3>最新询价</h3>
+                <p>前台提交后，优先在这里分配销售和判断是否转订单。</p>
+              </div>
+            </div>
+            <table class="list-table">
+              <thead>
+                <tr>
+                  <th>客户</th>
+                  <th>业务类型</th>
+                  <th>状态</th>
+                  <th>负责人</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>南方医科大学某课题组</td>
+                  <td>技术服务</td>
+                  <td><span class="badge badge-accent">待跟进</span></td>
+                  <td>商务 A</td>
+                </tr>
+                <tr>
+                  <td>广东省人民医院</td>
+                  <td>代采</td>
+                  <td><span class="badge">清单匹配中</span></td>
+                  <td>商务 B</td>
+                </tr>
+                <tr>
+                  <td>中山大学附属第一医院</td>
+                  <td>技术服务</td>
+                  <td><span class="badge">已转订单</span></td>
+                  <td>商务 A</td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+
+          <article class="admin-card">
+            <div class="section-header">
+              <div>
+                <h3>代采提醒</h3>
+                <p>旧系统最值钱的动作要保留在首页可见范围内。</p>
+              </div>
+            </div>
+            <div class="mini-list">
+              <div class="mini-item">
+                <div>
+                  <strong>待生成采购清单</strong>
+                  <div class="admin-meta">4 条代采询价尚未转采购清单</div>
+                </div>
+                <strong>4</strong>
+              </div>
+              <div class="mini-item">
+                <div>
+                  <strong>锐竟平台待确认价格</strong>
+                  <div class="admin-meta">2 个条目需要人工更新</div>
+                </div>
+                <strong>2</strong>
+              </div>
+              <div class="mini-item">
+                <div>
+                  <strong>喀斯玛本周新链接</strong>
+                  <div class="admin-meta">建议补录到统一供应商池</div>
+                </div>
+                <strong>6</strong>
+              </div>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
