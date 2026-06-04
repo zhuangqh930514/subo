@@ -3,7 +3,6 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { EditPen, Plus, RefreshRight, Search } from '@element-plus/icons-vue'
 import PanelCard from '../components/PanelCard.vue'
-import StatTile from '../components/StatTile.vue'
 import {
   createCustomer,
   fetchCustomerDetail,
@@ -64,46 +63,6 @@ const demoMode = computed(() => response.value?.demoMode ?? overview.value?.demo
 const customerDialogTitle = computed(() =>
   customerDialogMode.value === 'create' ? '新增客户' : '编辑客户',
 )
-
-const stats = computed(() => {
-  const summary = overview.value?.summary ?? {
-    totalCustomers: 0,
-    totalInvoiceProfiles: 0,
-    customersWithOrders: 0,
-    customersMissingInvoiceProfiles: 0,
-  }
-
-  return [
-    {
-      label: '客户总量',
-      value: String(summary.totalCustomers),
-      description: '统一承接旧后台客户、官网询价线索和后续订单沉淀。',
-      trend: demoMode.value ? '演示模式' : '数据库模式',
-      tone: demoMode.value ? 'warning' : 'primary',
-    },
-    {
-      label: '开票资料',
-      value: String(summary.totalInvoiceProfiles),
-      description: '客户抬头独立维护后，开票与订单核对会顺很多。',
-      trend: `${summary.customersMissingInvoiceProfiles} 个客户待补`,
-      tone: summary.customersMissingInvoiceProfiles > 0 ? 'warning' : 'success',
-    },
-    {
-      label: '已有订单客户',
-      value: String(summary.customersWithOrders),
-      description: '便于优先聚焦已有成交客户的复购和售后协同。',
-      trend: `${summary.totalCustomers - summary.customersWithOrders} 个仅留在线索池`,
-      tone: 'primary',
-    },
-    {
-      label: '当前结果',
-      value: String(records.value.length),
-      description: '按筛选条件实时读取客户清单，方便销售和商务联查。',
-      trend: `共 ${total.value} 条`,
-      tone: records.value.length > 0 ? 'success' : 'danger',
-    },
-  ] as const
-})
 
 watch(
   records,
@@ -370,18 +329,6 @@ function toBoolean(value: BooleanFilter) {
       :title="errorMessage"
       type="error"
     />
-
-    <section class="stats-grid">
-      <StatTile
-        v-for="item in stats"
-        :key="item.label"
-        :description="item.description"
-        :label="item.label"
-        :tone="item.tone"
-        :trend="item.trend"
-        :value="item.value"
-      />
-    </section>
 
     <section class="crm-layout">
       <PanelCard

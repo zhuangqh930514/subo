@@ -17,7 +17,6 @@ import {
   View,
 } from '@element-plus/icons-vue'
 import PanelCard from '../components/PanelCard.vue'
-import StatTile from '../components/StatTile.vue'
 import {
   appendProcurementListItems,
   createProcurementDraft,
@@ -162,43 +161,6 @@ const selectedPlatformSummary = computed(() => {
 
 const selectedPlatformNames = computed(() => {
   return Array.from(new Set(selectedItems.value.map((item) => item.platform)))
-})
-
-const stats = computed(() => {
-  const activeCount = items.value.filter((item) => item.status === 'active').length
-  const inactiveCount = items.value.filter((item) => item.status === 'inactive').length
-  const exportedCount = records.value.filter((item) => item.status === 'exported').length
-
-  return [
-    {
-      label: '供应商链接',
-      value: String(items.value.length),
-      description: '统一承接锐竟、喀斯玛和后续扩展平台的商品链接。',
-      trend: demoMode.value ? '演示模式' : '数据库模式',
-      tone: demoMode.value ? 'warning' : 'primary',
-    },
-    {
-      label: '启用 / 停用',
-      value: `${activeCount} / ${inactiveCount}`,
-      description: '启用链接可直接参与勾选生成清单，停用链接保留历史痕迹。',
-      trend: `${filteredItems.value.length} 条当前结果`,
-      tone: inactiveCount > 0 ? 'warning' : 'success',
-    },
-    {
-      label: '已选条目',
-      value: String(selectedCount.value),
-      description: '生成、导出动作都会按右侧当前选中条目执行。',
-      trend: formatCurrency(selectedTotal.value),
-      tone: selectedCount.value > 0 ? 'success' : 'danger',
-    },
-    {
-      label: '已导出清单',
-      value: String(exportedCount),
-      description: '保留旧系统最有价值的动作，并沉淀导出记录。',
-      trend: `${records.value.length} 条历史`,
-      tone: exportedCount > 0 ? 'primary' : 'warning',
-    },
-  ] as const
 })
 
 const allVisibleSelected = computed(() => {
@@ -742,18 +704,6 @@ function isProcurementDetailRecord(
       :title="errorMessage"
       type="error"
     />
-
-    <section class="stats-grid">
-      <StatTile
-        v-for="item in stats"
-        :key="item.label"
-        :description="item.description"
-        :label="item.label"
-        :tone="item.tone"
-        :trend="item.trend"
-        :value="item.value"
-      />
-    </section>
 
     <section class="procurement-layout">
       <PanelCard

@@ -8,7 +8,6 @@ import {
 } from 'element-plus'
 import { EditPen, Plus, RefreshRight, Search, Star } from '@element-plus/icons-vue'
 import PanelCard from '../components/PanelCard.vue'
-import StatTile from '../components/StatTile.vue'
 import {
   createInvoiceProfile,
   fetchCustomerDetail,
@@ -79,43 +78,6 @@ const demoMode = computed(() => response.value?.demoMode ?? false)
 const invoiceDialogTitle = computed(() =>
   invoiceDialogMode.value === 'create' ? '新增开票资料' : '编辑开票资料',
 )
-
-const stats = computed(() => {
-  const defaultCount = records.value.filter((item) => item.isDefault).length
-  const linkedOrderCount = records.value.reduce((sum, item) => sum + item.orderCount, 0)
-  const selectedMismatch = detail.value?.stats.mismatchedOrderCustomerCount ?? 0
-
-  return [
-    {
-      label: '抬头总量',
-      value: String(total.value),
-      description: '集中管理发票抬头、税号、开户地址和订单关联。',
-      trend: demoMode.value ? '演示模式' : '数据库模式',
-      tone: demoMode.value ? 'warning' : 'primary',
-    },
-    {
-      label: '当前页默认抬头',
-      value: String(defaultCount),
-      description: '默认抬头更适合在开票和订单生成时优先带出。',
-      trend: `${records.value.length} 条当前结果`,
-      tone: defaultCount > 0 ? 'success' : 'warning',
-    },
-    {
-      label: '关联订单数',
-      value: String(linkedOrderCount),
-      description: '便于快速判断这批开票资料是否已经参与履约链路。',
-      trend: detail.value ? `${detail.value.companyName}` : '等待选择详情',
-      tone: linkedOrderCount > 0 ? 'primary' : 'warning',
-    },
-    {
-      label: '映射差异',
-      value: String(selectedMismatch),
-      description: '旧库迁移后，如果客户和抬头未完全对齐，会在这里暴露出来。',
-      trend: selectedMismatch > 0 ? '建议优先核对' : '当前详情未发现',
-      tone: selectedMismatch > 0 ? 'danger' : 'success',
-    },
-  ] as const
-})
 
 watch(
   records,
@@ -422,18 +384,6 @@ function toBoolean(value: BooleanFilter) {
       :title="errorMessage"
       type="error"
     />
-
-    <section class="stats-grid">
-      <StatTile
-        v-for="item in stats"
-        :key="item.label"
-        :description="item.description"
-        :label="item.label"
-        :tone="item.tone"
-        :trend="item.trend"
-        :value="item.value"
-      />
-    </section>
 
     <section class="crm-layout">
       <PanelCard

@@ -4,7 +4,6 @@ import { Check, CircleCheck, Delete, RefreshRight, Switch, User } from '@element
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import PanelCard from '../components/PanelCard.vue'
-import StatTile from '../components/StatTile.vue'
 import { fetchCustomers, fetchInvoiceProfiles, type CustomerListRecord, type InvoiceProfileListRecord } from '../api/crm'
 import {
   assignQuoteRequestOwner,
@@ -93,47 +92,6 @@ const selectedRecord = computed(() => {
 
 const selectedCustomer = computed(() => {
   return customerOptions.value.find((item) => item.id === createOrderForm.customerId) ?? null
-})
-
-const stats = computed(() => {
-  const source = filteredRecords.value.length > 0 ? filteredRecords.value : records.value
-  const pendingCount = source.filter(
-    (item) => item.statusKey === 'pending' || item.statusKey === 'processing',
-  ).length
-  const procurementCount = source.filter((item) => item.businessTypeKey === 'procurement').length
-  const serviceCount = source.filter((item) => item.businessTypeKey === 'service').length
-  const unassignedCount = source.filter((item) => item.owner === '待分配').length
-
-  return [
-    {
-      label: '当前视图条目',
-      value: String(filteredRecords.value.length),
-      description: `总询价池 ${records.value.length} 条，当前筛选命中 ${filteredRecords.value.length} 条。`,
-      trend: demoMode.value ? '演示模式' : '数据库模式',
-      tone: demoMode.value ? 'warning' : 'primary',
-    },
-    {
-      label: '待跟进 / 跟进中',
-      value: String(pendingCount),
-      description: '适合先做分配、补联系人和确认需求边界。',
-      trend: `${Math.max(pendingCount - unassignedCount, 0)} 条已分配`,
-      tone: pendingCount > 0 ? 'warning' : 'success',
-    },
-    {
-      label: '技术服务 / 代采',
-      value: `${serviceCount} / ${procurementCount}`,
-      description: '把目录化技术服务和代采需求分开看，后台更容易排优先级。',
-      trend: `${total.value} 条累计`,
-      tone: 'primary',
-    },
-    {
-      label: '待分配线索',
-      value: String(unassignedCount),
-      description: '官网新进询价通常先出现在这里，适合尽快指派负责人。',
-      trend: selectedRecord.value?.owner ?? '等待选择',
-      tone: unassignedCount > 0 ? 'danger' : 'success',
-    },
-  ] as const
 })
 
 watch(
@@ -465,18 +423,6 @@ function sourceTagType(sourceKey: QuotePoolRecord['sourceKey']) {
       :title="errorMessage"
       type="error"
     />
-
-    <section class="stats-grid">
-      <StatTile
-        v-for="item in stats"
-        :key="item.label"
-        :description="item.description"
-        :label="item.label"
-        :tone="item.tone"
-        :trend="item.trend"
-        :value="item.value"
-      />
-    </section>
 
     <section class="quotes-layout">
       <PanelCard

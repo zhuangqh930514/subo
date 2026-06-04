@@ -4,7 +4,6 @@ import { Check, Delete, Download, EditPen, Plus, RefreshRight, Search } from '@e
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import PanelCard from '../components/PanelCard.vue'
-import StatTile from '../components/StatTile.vue'
 import { downloadContractFile, uploadOrderContract } from '../api/contracts'
 import {
   deleteOrder,
@@ -88,53 +87,6 @@ const uploadRules: FormRules<typeof uploadForm> = {
 const records = computed(() => response.value?.records ?? [])
 const total = computed(() => response.value?.total ?? 0)
 const demoMode = computed(() => response.value?.demoMode ?? overview.value?.demoMode ?? false)
-
-const stats = computed(() => {
-  const summary = overview.value?.summary ?? {
-    totalOrders: 0,
-    serviceOrderCount: 0,
-    procurementOrderCount: 0,
-    paidOrderCount: 0,
-    pendingPaymentCount: 0,
-    paidOrderAmount: 0,
-    paidOrderAmountLabel: '￥0.00',
-    pendingPaymentAmount: 0,
-    pendingPaymentAmountLabel: '￥0.00',
-    totalOrderAmount: 0,
-    totalOrderAmountLabel: '￥0.00',
-  }
-
-  return [
-    {
-      label: '订单总量',
-      value: String(summary.totalOrders),
-      description: '技术服务与代采订单在同一页统一管理。',
-      trend: demoMode.value ? '演示模式' : '数据库模式',
-      tone: demoMode.value ? 'warning' : 'primary',
-    },
-    {
-      label: '服务 / 代采',
-      value: `${summary.serviceOrderCount} / ${summary.procurementOrderCount}`,
-      description: '便于快速分辨标准服务单与采购协同单的结构差异。',
-      trend: summary.totalOrderAmountLabel,
-      tone: 'primary',
-    },
-    {
-      label: '已收款订单',
-      value: String(summary.paidOrderCount),
-      description: '收款状态能帮助我们优先安排合同、发票和交付跟进。',
-      trend: summary.paidOrderAmountLabel,
-      tone: summary.pendingPaymentCount > 0 ? 'warning' : 'success',
-    },
-    {
-      label: '待收款',
-      value: String(records.value.length),
-      description: '按筛选条件查看订单，不必再回旧系统挨个翻。',
-      trend: summary.pendingPaymentAmountLabel,
-      tone: records.value.length > 0 ? 'success' : 'danger',
-    },
-  ] as const
-})
 
 watch(
   records,
@@ -526,18 +478,6 @@ function hydrateEditForm(record: OrderDetailRecord) {
       :title="errorMessage"
       type="error"
     />
-
-    <section class="stats-grid">
-      <StatTile
-        v-for="item in stats"
-        :key="item.label"
-        :description="item.description"
-        :label="item.label"
-        :tone="item.tone"
-        :trend="item.trend"
-        :value="item.value"
-      />
-    </section>
 
     <section class="orders-layout">
       <PanelCard

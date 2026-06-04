@@ -12,7 +12,6 @@ import {
   UserFilled,
 } from '@element-plus/icons-vue'
 import PanelCard from '../components/PanelCard.vue'
-import StatTile from '../components/StatTile.vue'
 import {
   createAdminUser,
   deleteAdminUser,
@@ -70,47 +69,6 @@ const total = computed(() => userResponse.value?.total ?? 0)
 const demoMode = computed(() => overview.value?.demoMode ?? userResponse.value?.demoMode ?? false)
 const roles = computed(() => overview.value?.roles ?? [])
 const recentLogs = computed(() => overview.value?.recentLogs ?? [])
-
-const stats = computed(() => {
-  const summary = overview.value?.summary ?? {
-    totalUsers: 0,
-    activeUsers: 0,
-    disabledUsers: 0,
-    roleCount: 0,
-    recentLogCount: 0,
-  }
-
-  return [
-    {
-      label: '管理员账号',
-      value: String(summary.totalUsers),
-      description: '统一承接后台登录账号、角色挂载和启停用状态。',
-      trend: demoMode.value ? '演示模式' : '数据库模式',
-      tone: demoMode.value ? 'warning' : 'primary',
-    },
-    {
-      label: '启用中账号',
-      value: String(summary.activeUsers),
-      description: '可正常登录后台并按静态角色权限访问工作台。',
-      trend: `${summary.disabledUsers} 个已停用`,
-      tone: summary.disabledUsers > 0 ? 'warning' : 'success',
-    },
-    {
-      label: '内置角色',
-      value: String(summary.roleCount),
-      description: '角色权限先做静态映射，方便先把管理链路跑通。',
-      trend: '可直接分配',
-      tone: 'primary',
-    },
-    {
-      label: '最近操作',
-      value: String(summary.recentLogCount),
-      description: '记录创建、编辑、启停用、重置密码和删除等关键动作。',
-      trend: `本页 ${rows.value.length} 条账号`,
-      tone: recentLogs.value.length > 0 ? 'success' : 'warning',
-    },
-  ] as const
-})
 
 const formRules: FormRules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
@@ -382,18 +340,6 @@ function permissionTone(length: number) {
       :title="errorMessage"
       type="error"
     />
-
-    <section class="stats-grid">
-      <StatTile
-        v-for="item in stats"
-        :key="item.label"
-        :description="item.description"
-        :label="item.label"
-        :tone="item.tone"
-        :trend="item.trend"
-        :value="item.value"
-      />
-    </section>
 
     <PanelCard
       description="按账号、联系人和启停用状态筛选管理员列表，并在同一页处理新增、编辑、启停用、重置密码和删除。"

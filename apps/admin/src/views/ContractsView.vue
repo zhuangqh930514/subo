@@ -4,7 +4,6 @@ import { Delete, Download, EditPen, Plus, RefreshRight, Search } from '@element-
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import PanelCard from '../components/PanelCard.vue'
-import StatTile from '../components/StatTile.vue'
 import {
   deleteContract,
   downloadContractFile,
@@ -80,46 +79,6 @@ const editRules: FormRules<typeof editForm> = {
 const records = computed(() => response.value?.records ?? [])
 const total = computed(() => response.value?.total ?? 0)
 const demoMode = computed(() => response.value?.demoMode ?? overview.value?.demoMode ?? false)
-
-const stats = computed(() => {
-  const summary = overview.value?.summary ?? {
-    totalContracts: 0,
-    linkedOrderContracts: 0,
-    unlinkedContracts: 0,
-    legacyContracts: 0,
-  }
-
-  return [
-    {
-      label: '合同总量',
-      value: String(summary.totalContracts),
-      description: '先把旧合同元数据拉进新系统，至少做到可见、可查、可继续补链。',
-      trend: demoMode.value ? '演示模式' : '数据库模式',
-      tone: demoMode.value ? 'warning' : 'primary',
-    },
-    {
-      label: '已关联订单',
-      value: String(summary.linkedOrderContracts),
-      description: '能直接挂到订单的合同，会在订单详情与合同页同时出现。',
-      trend: `${summary.unlinkedContracts} 条待补链`,
-      tone: summary.linkedOrderContracts > 0 ? 'success' : 'warning',
-    },
-    {
-      label: '旧合同迁移',
-      value: String(summary.legacyContracts),
-      description: '当前主要承接旧后台 contract 表，后续新上传也能复用这套结构。',
-      trend: `${summary.totalContracts - summary.legacyContracts} 条新合同`,
-      tone: 'primary',
-    },
-    {
-      label: '当前结果',
-      value: String(records.value.length),
-      description: '按关键词和是否关联订单快速缩小核对范围。',
-      trend: `共 ${total.value} 条`,
-      tone: records.value.length > 0 ? 'success' : 'danger',
-    },
-  ] as const
-})
 
 watch(
   records,
@@ -569,18 +528,6 @@ function inferContractName(fileName: string) {
       :title="errorMessage"
       type="error"
     />
-
-    <section class="stats-grid">
-      <StatTile
-        v-for="item in stats"
-        :key="item.label"
-        :description="item.description"
-        :label="item.label"
-        :tone="item.tone"
-        :trend="item.trend"
-        :value="item.value"
-      />
-    </section>
 
     <section class="contracts-layout">
       <PanelCard

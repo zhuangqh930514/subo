@@ -10,7 +10,6 @@ import {
 } from 'element-plus'
 import { Download, EditPen, FolderOpened, RefreshRight, Search } from '@element-plus/icons-vue'
 import PanelCard from '../components/PanelCard.vue'
-import StatTile from '../components/StatTile.vue'
 import {
   bulkUpdateServiceCatalogStatus,
   fetchServiceCatalogOverview,
@@ -120,48 +119,6 @@ const selectionSummary = computed(() => {
 
 const selectedItem = computed(() => {
   return records.value.find((item) => item.id === selectedId.value) ?? records.value[0] ?? null
-})
-
-const stats = computed(() => {
-  const summary = overview.value?.summary ?? {
-    categoryCount: 0,
-    projectCount: 0,
-    itemCount: 0,
-    activeItemCount: 0,
-  }
-
-  const inactiveCount = Math.max(summary.itemCount - summary.activeItemCount, 0)
-
-  return [
-    {
-      label: '分类总数',
-      value: String(summary.categoryCount),
-      description: '服务目录按大类组织，便于官网展示与后台运营分层管理。',
-      trend: `${categoryOptions.value.length} 个筛选项`,
-      tone: 'primary' as const,
-    },
-    {
-      label: '项目总数',
-      value: String(summary.projectCount),
-      description: '项目层承接具体服务能力，后续可继续扩展批量维护动作。',
-      trend: `${filteredProjectOptions.value.length} 个可选项目`,
-      tone: 'primary' as const,
-    },
-    {
-      label: '当前结果',
-      value: String(records.value.length),
-      description: '列表按搜索条件实时从 API 拉取，避免前后台目录口径漂移。',
-      trend: `上限 ${filters.limit} 条`,
-      tone: records.value.length > 0 ? ('warning' as const) : ('danger' as const),
-    },
-    {
-      label: '启用条目',
-      value: String(summary.activeItemCount),
-      description: '启用状态的条目会继续对外提供给官网和报价中心使用。',
-      trend: inactiveCount > 0 ? `${inactiveCount} 条非启用` : '全部启用',
-      tone: inactiveCount > 0 ? ('warning' as const) : ('success' as const),
-    },
-  ]
 })
 
 const rowKey = (row: ServiceCatalogItemRecord) => row.id
@@ -419,18 +376,6 @@ function rowClassName(payload: { row: ServiceCatalogItemRecord }) {
       :title="errorMessage"
       type="error"
     />
-
-    <section class="stats-grid">
-      <StatTile
-        v-for="item in stats"
-        :key="item.label"
-        :description="item.description"
-        :label="item.label"
-        :tone="item.tone"
-        :trend="item.trend"
-        :value="item.value"
-      />
-    </section>
 
     <section class="catalog-layout">
       <PanelCard
