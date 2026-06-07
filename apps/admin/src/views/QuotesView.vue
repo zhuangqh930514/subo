@@ -485,6 +485,7 @@ function sourceTagType(sourceKey: QuotePoolRecord['sourceKey']) {
               <div class="record-cell">
                 <strong>{{ row.customer }}</strong>
                 <span>{{ row.contactName }}</span>
+                <span>联系方式：{{ row.contactChannel }}</span>
               </div>
             </template>
           </el-table-column>
@@ -558,7 +559,7 @@ function sourceTagType(sourceKey: QuotePoolRecord['sourceKey']) {
               <span class="detail-hero__label">询价档案</span>
               <h3>{{ selectedRecord.quoteNo }}</h3>
               <p class="detail-hero__summary">
-                {{ selectedRecord.customer }} / 联系人 {{ selectedRecord.contactName }} / 更新于 {{ selectedRecord.updatedAtLabel }}
+                {{ selectedRecord.customer }} / 联系人 {{ selectedRecord.contactName }} / 联系方式 {{ selectedRecord.contactChannel }} / 更新于 {{ selectedRecord.updatedAtLabel }}
               </p>
             </div>
             <div class="detail-hero__aside">
@@ -601,6 +602,10 @@ function sourceTagType(sourceKey: QuotePoolRecord['sourceKey']) {
               <span class="admin-meta">{{ selectedRecord.contactChannel }}</span>
             </div>
             <div class="detail-fact-grid">
+              <div class="detail-fact">
+                <span>联系方式</span>
+                <strong>{{ selectedRecord.contactChannel }}</strong>
+              </div>
               <div class="detail-fact">
                 <span>业务类型</span>
                 <strong>{{ selectedRecord.businessType }}</strong>
@@ -692,7 +697,7 @@ function sourceTagType(sourceKey: QuotePoolRecord['sourceKey']) {
               {{ selectedRecord.status }}
             </el-tag>
           </div>
-          <p class="detail-meta">{{ selectedRecord.contactName }} · {{ selectedRecord.contactChannel }}</p>
+          <p class="detail-meta">{{ selectedRecord.contactName }} · 联系方式：{{ selectedRecord.contactChannel }}</p>
           <p class="detail-meta">{{ selectedRecord.quoteNo }} · {{ selectedRecord.updatedAtLabel }}</p>
           <div v-if="selectedRecord.linkedOrder" class="linked-order">
             <span class="panel-meta">已关联订单</span>
