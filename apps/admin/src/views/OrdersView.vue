@@ -1,19 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { Check, Delete, Download, EditPen, Plus, RefreshRight, Search, View } from '@element-plus/icons-vue'
+import { Check, Delete, Download, EditPen, Plus, Search, View } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import PanelCard from '../components/PanelCard.vue'
 import { downloadContractFile, uploadOrderContract } from '../api/contracts'
 import {
   deleteOrder,
   fetchOrderDetail,
   fetchOrders,
-  fetchOrdersOverview,
   type OrderDetailRecord,
   type OrderContractSummary,
   type OrderListRecord,
-  type OrdersOverviewResponse,
   type PagedResponse,
   type SaveOrderPayload,
   updateOrder,
@@ -32,7 +29,6 @@ const uploadDialogVisible = ref(false)
 const uploadSubmitting = ref(false)
 const downloadingContractId = ref('')
 const deleteLoadingId = ref('')
-const overview = ref<OrdersOverviewResponse | null>(null)
 const response = ref<PagedResponse<OrderListRecord> | null>(null)
 const detail = ref<OrderDetailRecord | null>(null)
 const editingRecord = ref<OrderDetailRecord | null>(null)
@@ -46,9 +42,6 @@ const fileInputRef = ref<HTMLInputElement | null>(null)
 const filters = reactive({
   search: '',
   isPaid: '' as BooleanFilter,
-  hasDeliveryNote: '' as BooleanFilter,
-  dateFrom: '',
-  dateTo: '',
   page: 1,
   pageSize: 10,
 })
@@ -87,7 +80,7 @@ const uploadRules: FormRules<typeof uploadForm> = {
 
 const records = computed(() => response.value?.records ?? [])
 const total = computed(() => response.value?.total ?? 0)
-const demoMode = computed(() => response.value?.demoMode ?? overview.value?.demoMode ?? false)
+const demoMode = computed(() => response.value?.demoMode ?? false)
 
 watch(
   records,
@@ -123,23 +116,13 @@ async function loadPage() {
   errorMessage.value = ''
 
   try {
-    const [nextOverview, nextResponse] = await Promise.all([
-      fetchOrdersOverview(6),
-      fetchOrders({
-        search: filters.search.trim() || undefined,
-        isPaid: toBoolean(filters.isPaid),
-        hasDeliveryNote: toBoolean(filters.hasDeliveryNote),
-        dateFrom: filters.dateFrom || undefined,
-        dateTo: filters.dateTo || undefined,
-        page: filters.page,
-        pageSize: filters.pageSize,
-      }),
-    ])
-
-    overview.value = nextOverview
-    response.value = nextResponse
+    response.value = await fetchOrders({
+      search: filters.search.trim() || undefined,
+      isPaid: toBoolean(filters.isPaid),
+      page: filters.page,
+      pageSize: filters.pageSize,
+    })
   } catch (error) {
-    overview.value = null
     response.value = null
     errorMessage.value = error instanceof Error ? error.message : '订单列表加载失败。'
   } finally {
@@ -170,9 +153,6 @@ function applyFilters() {
 function resetFilters() {
   filters.search = ''
   filters.isPaid = ''
-  filters.hasDeliveryNote = ''
-  filters.dateFrom = ''
-  filters.dateTo = ''
   filters.page = 1
   filters.pageSize = 10
   void loadPage()
@@ -493,26 +473,8 @@ function hydrateEditForm(record: OrderDetailRecord) {
     />
 
     <section class="orders-layout">
-      <PanelCard
-        description="把订单列表、付款状态和代采后续动作放进同一个工作台里。"
-        title="订单列表"
-      >
-        <template #extra>
-          <div class="panel-extra">
-            <span class="panel-meta">{{ records.length }} / {{ total }}</span>
-            <el-button
-              :icon="RefreshRight"
-              :loading="loading"
-              size="large"
-              type="primary"
-              @click="loadPage"
-            >
-              刷新
-            </el-button>
-          </div>
-        </template>
-
-        <div class="toolbar-grid">
+      <el-card shadow="never">
+        <div class="toolbar-grid toolbar-grid--stacked">
           <el-input
             v-model="filters.search"
             clearable
@@ -535,34 +497,7 @@ function hydrateEditForm(record: OrderDetailRecord) {
             <el-option label="待收款" value="false" />
           </el-select>
 
-          <el-select
-            v-model="filters.hasDeliveryNote"
-            clearable
-            placeholder="出库单状态"
-            size="large"
-          >
-            <el-option label="已有出库单" value="true" />
-            <el-option label="暂无出库单" value="false" />
-          </el-select>
-
-          <div class="date-range">
-            <el-date-picker
-              v-model="filters.dateFrom"
-              placeholder="开始日期"
-              size="large"
-              type="date"
-              value-format="YYYY-MM-DD"
-            />
-            <el-date-picker
-              v-model="filters.dateTo"
-              placeholder="结束日期"
-              size="large"
-              type="date"
-              value-format="YYYY-MM-DD"
-            />
-          </div>
-
-          <div class="toolbar-actions">
+          <div class="toolbar-actions toolbar-actions--stacked">
             <el-button size="large" @click="resetFilters">重置</el-button>
             <el-button :loading="loading" size="large" type="primary" @click="applyFilters">
               查询
@@ -657,7 +592,7 @@ function hydrateEditForm(record: OrderDetailRecord) {
             @size-change="handlePageSizeChange"
           />
         </div>
-      </PanelCard>
+      </el-card>
     </section>
 
     <el-dialog
@@ -1121,13 +1056,11 @@ function hydrateEditForm(record: OrderDetailRecord) {
   align-items: start;
 }
 
-.panel-extra,
 .toolbar-actions,
 .row-actions,
 .detail-item__head,
 .detail-block__head,
 .pagination-row,
-.date-range,
 .detail-item__actions,
 .file-picker__actions,
 .dialog-footer,
@@ -1138,7 +1071,6 @@ function hydrateEditForm(record: OrderDetailRecord) {
   gap: 12px;
 }
 
-.panel-meta,
 .detail-meta {
   color: var(--app-text-muted);
   font-size: 12px;
@@ -1151,8 +1083,22 @@ function hydrateEditForm(record: OrderDetailRecord) {
   margin-bottom: 18px;
 }
 
+.toolbar-grid--stacked {
+  grid-template-columns: minmax(0, 360px);
+}
+
 .toolbar-actions {
   justify-content: flex-end;
+}
+
+.toolbar-actions--stacked {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.toolbar-actions--stacked :deep(.el-button) {
+  width: 100%;
+  margin: 0;
 }
 
 .row-actions {
@@ -1293,6 +1239,10 @@ function hydrateEditForm(record: OrderDetailRecord) {
   .orders-layout {
     grid-template-columns: 1fr;
   }
+
+  .toolbar-grid--stacked {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 760px) {
@@ -1304,13 +1254,11 @@ function hydrateEditForm(record: OrderDetailRecord) {
     grid-template-columns: 1fr;
   }
 
-  .panel-extra,
   .toolbar-actions,
   .row-actions,
   .detail-item__head,
   .detail-block__head,
   .pagination-row,
-  .date-range,
   .detail-item__actions,
   .file-picker__actions,
   .switch-grid,
