@@ -992,87 +992,6 @@ function isProcurementDetailRecord(
       </PanelCard>
     </section>
 
-    <section class="history-grid">
-      <PanelCard
-        description="新的后台里，这里既是导出记录，也是采购动作追踪点。"
-        title="最近生成记录"
-      >
-        <el-table
-          :data="records"
-          class="admin-table"
-          empty-text="当前还没有采购清单记录。"
-          v-loading="loading"
-        >
-          <el-table-column label="清单编号" min-width="190" prop="listNo" />
-          <el-table-column label="平台" min-width="100" prop="platform" />
-          <el-table-column label="关联对象" min-width="240" prop="relatedInquiry" />
-          <el-table-column label="条目数" min-width="90" prop="itemCount" />
-          <el-table-column label="金额" min-width="120" prop="totalAmountLabel" />
-          <el-table-column label="状态" min-width="100">
-            <template #default="{ row }">
-              <el-tag :type="recordTagType(row.status)" effect="plain" round>
-                {{ row.statusLabel }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="更新时间" min-width="120" prop="updatedAt" />
-          <el-table-column label="动作" min-width="190">
-            <template #default="{ row }">
-              <div class="row-actions">
-                <el-button
-                  :icon="View"
-                  link
-                  type="primary"
-                  @click="openRecordDetail(row)"
-                >
-                  详情
-                </el-button>
-                <el-button
-                  :disabled="getAppendActionState(row).disabled"
-                  :loading="appendingRecordId === row.id"
-                  link
-                  type="primary"
-                  @click="appendItemsToRecord(row)"
-                >
-                  {{ getAppendActionState(row).label }}
-                </el-button>
-                <el-button
-                  v-if="row.downloadUrl"
-                  :icon="Download"
-                  link
-                  type="primary"
-                  @click="openDownloadRecord(row)"
-                >
-                  下载
-                </el-button>
-                <span v-else class="muted-copy">无下载</span>
-              </div>
-            </template>
-          </el-table-column>
-        </el-table>
-      </PanelCard>
-
-      <PanelCard
-        description="把旧后台最实用的动作迁进来，同时为后续扩平台留出空间。"
-        title="迁移要点"
-      >
-        <div class="migration-list">
-          <article class="migration-item">
-            <strong>平台统一，动作不丢</strong>
-            <p>锐竟 / 喀斯玛收敛为平台字段，不再复制两套菜单与表单。</p>
-          </article>
-          <article class="migration-item">
-            <strong>导出成为正式功能</strong>
-            <p>清单可以关联询价、订单、客户与导出记录，后续追单更顺手。</p>
-          </article>
-          <article class="migration-item">
-            <strong>链接可维护</strong>
-            <p>现在可以直接在后台新增、编辑、启停供应商链接，不需要回旧系统改数据。</p>
-          </article>
-        </div>
-      </PanelCard>
-    </section>
-
     <el-dialog
       v-model="linkDialogVisible"
       :title="linkDialogTitle"
@@ -1429,8 +1348,7 @@ function isProcurementDetailRecord(
 
 .platform-pill-list,
 .selected-list,
-.field-stack,
-.migration-list {
+.field-stack {
   display: grid;
   gap: 10px;
 }
@@ -1461,28 +1379,6 @@ function isProcurementDetailRecord(
 .summary-actions {
   gap: 12px;
   flex-wrap: wrap;
-}
-
-.history-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
-  gap: 16px;
-}
-
-.migration-item {
-  padding: 16px;
-  display: grid;
-  gap: 6px;
-}
-
-.migration-item strong {
-  font-size: 15px;
-}
-
-.migration-item p {
-  margin: 0;
-  color: var(--app-text-secondary);
-  line-height: 1.7;
 }
 
 .dialog-grid {
@@ -1565,8 +1461,7 @@ function isProcurementDetailRecord(
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .procurement-layout,
-  .history-grid {
+  .procurement-layout {
     grid-template-columns: 1fr;
   }
 }
