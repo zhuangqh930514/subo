@@ -53,7 +53,6 @@ function buildCategorySummary(category: ServiceCatalogCategory) {
       <div class="section-header">
         <div>
           <h2 class="section-title">技术服务覆盖科研常用方向，可按项目快速筛选与询价</h2>
-          <p>先了解服务范围，再进入服务页或报价中心查看项目明细、参考价格与提交入口。</p>
         </div>
       </div>
 

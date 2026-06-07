@@ -823,7 +823,7 @@ function isProcurementDetailRecord(
           <el-table-column label="规格" min-width="140" prop="spec" />
           <el-table-column label="状态" min-width="100">
             <template #default="{ row }">
-              <el-tag :type="linkStatusTagType(row.status)" effect="dark" round>
+              <el-tag :type="linkStatusTagType(row.status)" effect="plain" round>
                 {{ row.statusLabel }}
               </el-tag>
             </template>
@@ -1010,7 +1010,7 @@ function isProcurementDetailRecord(
           <el-table-column label="金额" min-width="120" prop="totalAmountLabel" />
           <el-table-column label="状态" min-width="100">
             <template #default="{ row }">
-              <el-tag :type="recordTagType(row.status)" effect="dark" round>
+              <el-tag :type="recordTagType(row.status)" effect="plain" round>
                 {{ row.statusLabel }}
               </el-tag>
             </template>
@@ -1177,7 +1177,7 @@ function isProcurementDetailRecord(
               </div>
 
               <div class="detail-head__actions">
-                <el-tag :type="recordTagType(detailRecord.status)" effect="dark" round>
+                <el-tag :type="recordTagType(detailRecord.status)" effect="plain" round>
                   {{ detailRecord.statusLabel }}
                 </el-tag>
                 <el-button

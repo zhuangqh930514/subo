@@ -92,10 +92,13 @@ const fallbackApiResponse: SiteProfileApiResponse = {
 
 export function useSiteProfileData() {
   const runtimeConfig = useRuntimeConfig();
+  const apiBase = import.meta.server
+    ? runtimeConfig.apiInternalBase
+    : runtimeConfig.public.apiBase;
 
   const { data, error, pending, refresh } = useAsyncData(
     "site-profile-public",
-    () => $fetch<SiteProfileApiResponse>(`${runtimeConfig.public.apiBase}/site-profile/public`),
+    () => $fetch<SiteProfileApiResponse>(`${apiBase}/site-profile/public`),
     {
       default: () => fallbackApiResponse,
     },

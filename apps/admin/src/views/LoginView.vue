@@ -195,9 +195,9 @@ async function submitLogin() {
   gap: 32px;
   padding: 32px;
   background:
-    radial-gradient(circle at top left, rgba(12, 92, 171, 0.18), transparent 32%),
-    radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.14), transparent 28%),
-    linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(10, 14, 22, 0.98));
+    radial-gradient(circle at top left, rgba(12, 92, 171, 0.08), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.07), transparent 28%),
+    #ffffff;
 }
 
 .login-brand {
@@ -255,8 +255,8 @@ async function submitLogin() {
 }
 
 .login-hero__eyebrow {
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--app-border-strong);
+  background: rgba(15, 23, 42, 0.04);
   color: var(--app-text-soft);
 }
 
@@ -283,9 +283,9 @@ async function submitLogin() {
   gap: 10px;
   min-height: 144px;
   padding: 18px;
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid var(--app-border-strong);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(15, 23, 42, 0.03);
 }
 
 .highlight-card strong {
@@ -302,9 +302,7 @@ async function submitLogin() {
   align-content: center;
   gap: 24px;
   padding: 32px 28px;
-  background:
-    linear-gradient(180deg, rgba(20, 24, 33, 0.96), rgba(12, 15, 22, 0.98)),
-    rgba(12, 15, 22, 0.96);
+  background: #ffffff;
 }
 
 .login-card__header {
@@ -315,7 +313,7 @@ async function submitLogin() {
 .login-card__eyebrow {
   border: 1px solid rgba(12, 92, 171, 0.34);
   background: rgba(12, 92, 171, 0.12);
-  color: #8fc7ff;
+  color: var(--app-primary);
 }
 
 .login-card__header h2 {

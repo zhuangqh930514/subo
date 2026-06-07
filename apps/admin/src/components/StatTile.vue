@@ -17,7 +17,7 @@ defineProps<{
       <span>{{ label }}</span>
       <el-tag
         :type="tone === 'success' ? 'success' : tone === 'warning' ? 'warning' : tone === 'danger' ? 'danger' : 'primary'"
-        effect="dark"
+        effect="plain"
         round
         size="small"
       >

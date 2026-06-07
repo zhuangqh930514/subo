@@ -41,7 +41,8 @@ function isActive(to: string) {
       </nav>
 
       <div class="actions">
-        <NuxtLink class="button button-secondary" to="/procurement">代采入口</NuxtLink>
+        <NuxtLink class="button button-secondary" to="/quote?mode=procurement">代采询价</NuxtLink>
+        <NuxtLink class="button button-secondary" to="/contact">联系商务</NuxtLink>
         <NuxtLink class="button button-primary" to="/quote">进入报价中心</NuxtLink>
       </div>
     </div>

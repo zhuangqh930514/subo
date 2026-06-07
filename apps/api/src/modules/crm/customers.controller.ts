@@ -2,6 +2,7 @@ import {
   Body,
   BadRequestException,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -73,6 +74,17 @@ export class CustomersController {
     return this.crmService.updateCustomer(
       parsePositiveInt(id, 'id'),
       parseCustomerPayload(payload),
+      parseSessionUserId(session),
+    );
+  }
+
+  @Delete(':id')
+  remove(
+    @Param('id') id: string,
+    @AdminSession() session: SessionLike | undefined,
+  ) {
+    return this.crmService.deleteCustomer(
+      parsePositiveInt(id, 'id'),
       parseSessionUserId(session),
     );
   }

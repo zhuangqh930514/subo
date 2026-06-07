@@ -1,0 +1,22 @@
+[Unit]
+Description=Subo Web
+After=network.target
+
+[Service]
+Type=simple
+User=www
+Group=www
+WorkingDirectory=/www/wwwroot/subo-deploy/web
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PORT=3007
+Environment=NITRO_HOST=127.0.0.1
+Environment=NITRO_PORT=3007
+Environment=NUXT_PUBLIC_API_BASE=/api
+Environment=NUXT_API_INTERNAL_BASE=http://127.0.0.1:3006/api
+ExecStart=/usr/local/bin/node /www/wwwroot/subo-deploy/web/server/index.mjs
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

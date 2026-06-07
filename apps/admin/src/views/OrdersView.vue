@@ -587,7 +587,7 @@ function hydrateEditForm(record: OrderDetailRecord) {
 
           <el-table-column label="收款" min-width="100">
             <template #default="{ row }">
-              <el-tag :type="paymentTag(row.isPaid)" effect="dark" round>
+              <el-tag :type="paymentTag(row.isPaid)" effect="plain" round>
                 {{ row.paymentStatusLabel }}
               </el-tag>
             </template>
@@ -761,7 +761,7 @@ function hydrateEditForm(record: OrderDetailRecord) {
                 </div>
                 <div class="detail-item__head">
                   <span class="detail-meta">{{ detail.quoteRequest.contactName }}</span>
-                  <el-tag :type="quoteStatusTag(detail.quoteRequest.status)" effect="dark" round size="small">
+                  <el-tag :type="quoteStatusTag(detail.quoteRequest.status)" effect="plain" round size="small">
                     {{ detail.quoteRequest.statusLabel }}
                   </el-tag>
                 </div>
@@ -1163,7 +1163,7 @@ function hydrateEditForm(record: OrderDetailRecord) {
   padding: 14px;
   border: 1px solid var(--app-border);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(15, 23, 42, 0.03);
 }
 
 .mini-metric span {
@@ -1210,7 +1210,7 @@ function hydrateEditForm(record: OrderDetailRecord) {
   padding: 12px 14px;
   border: 1px solid var(--app-border);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(15, 23, 42, 0.03);
 }
 
 .summary-chip span,

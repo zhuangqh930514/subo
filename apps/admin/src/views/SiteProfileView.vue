@@ -153,7 +153,7 @@ function patchForm(profile: SiteProfileRecord) {
           <span>当前状态</span>
           <el-tag
             :type="sourceType"
-            effect="dark"
+            effect="plain"
             round
           >
             {{ sourceLabel }}
@@ -336,7 +336,7 @@ function patchForm(profile: SiteProfileRecord) {
   padding: 16px;
   border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(15, 23, 42, 0.03);
 }
 
 .summary-item span,

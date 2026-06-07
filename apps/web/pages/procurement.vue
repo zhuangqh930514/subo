@@ -5,6 +5,18 @@ import {
   procurementTimeline
 } from "~/data/mock";
 
+const procurementHeroTitle = "支持锐竞采购平台和喀斯玛平台下单";
+const procurementHeroTitleChars = Array.from(procurementHeroTitle);
+const procurementSignals = [
+  "平台入口直连",
+  "清单整理导出",
+  "商务确认跟进"
+];
+const procurementCategoryCards = procurementCategories.map((card, index) => ({
+  ...card,
+  index: String(index + 1).padStart(2, "0")
+}));
+
 const supportedPlatforms = [
   {
     title: "锐竞采购平台",
@@ -27,58 +39,82 @@ useSeoMeta({
 </script>
 
 <template>
-  <div>
-    <section class="section">
+  <div class="procurement-page">
+    <section class="section procurement-stage-section">
       <div class="section-inner">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">支持锐竞采购平台和喀斯玛平台下单</h2>
-          </div>
-        </div>
-
-        <div class="band-grid">
-          <article
-            v-for="platform in supportedPlatforms"
-            :key="platform.title"
-            class="card stack-panel"
-          >
-            <div class="stack-panel">
-              <div>
-                <h3>{{ platform.title }}</h3>
-                <p>{{ platform.summary }}</p>
-              </div>
-              <span class="admin-meta">平台入口：{{ platform.host }}</span>
-            </div>
-
-            <div class="actions">
-              <a
-                class="button button-secondary"
-                :href="platform.href"
-                target="_blank"
-                rel="noreferrer"
+        <div class="procurement-stage">
+          <div class="procurement-stage__copy">
+            <h1 class="section-title page-head__title" :aria-label="procurementHeroTitle">
+              <span
+                v-for="(char, charIndex) in procurementHeroTitleChars"
+                :key="`procurement-hero-${charIndex}`"
+                class="page-head__title-char"
+                :style="{ '--char-index': charIndex }"
               >
-                打开平台
-              </a>
-              <NuxtLink class="button button-primary" to="/quote?mode=procurement">
-                提交代采需求
-              </NuxtLink>
+                {{ char }}
+              </span>
+            </h1>
+            <p class="procurement-stage__summary">
+              锐竞与喀斯玛双平台入口可直接承接，适合高校、医院与企业研发采购场景，支持代采询价、清单整理与后续商务确认集中处理。
+            </p>
+            <div class="procurement-stage__signals">
+              <span
+                v-for="signal in procurementSignals"
+                :key="signal"
+                class="procurement-stage__signal"
+              >
+                {{ signal }}
+              </span>
             </div>
-          </article>
+          </div>
+
+          <div class="procurement-stage__platforms">
+            <article
+              v-for="platform in supportedPlatforms"
+              :key="platform.title"
+              class="procurement-platform-card"
+            >
+              <div>
+                <h3 class="procurement-platform-card__title">{{ platform.title }}</h3>
+                <span class="procurement-platform-card__host">{{ platform.host }}</span>
+              </div>
+              <p>{{ platform.summary }}</p>
+
+              <div class="actions procurement-platform-card__actions">
+                <a
+                  class="button button-secondary"
+                  :href="platform.href"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  打开平台
+                </a>
+                <NuxtLink class="button button-primary" to="/quote?mode=procurement">
+                  提交代采需求
+                </NuxtLink>
+              </div>
+            </article>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="section">
+    <section class="section procurement-category-section">
       <div class="section-inner">
-        <div class="section-header">
+        <div class="section-header procurement-section-header">
           <div>
             <h2 class="section-title">可承接的代采范围</h2>
             <p>覆盖科研常见试剂、耗材及相关商务协同需求。</p>
           </div>
         </div>
 
-        <div class="service-grid">
-          <article v-for="card in procurementCategories" :key="card.title" class="card">
+        <div class="service-grid procurement-category-grid">
+          <article
+            v-for="card in procurementCategoryCards"
+            :key="card.title"
+            class="card procurement-category-card"
+          >
+            <span class="procurement-category-card__index">{{ card.index }}</span>
             <h3>{{ card.title }}</h3>
             <p>{{ card.summary }}</p>
           </article>
@@ -86,18 +122,22 @@ useSeoMeta({
       </div>
     </section>
 
-    <section class="section section-alt">
+    <section class="section section-alt procurement-process-section">
       <div class="section-inner">
-        <div class="section-header">
+        <div class="section-header procurement-section-header">
           <div>
             <h2 class="section-title">采购流程清晰，支持清单整理与导出</h2>
             <p>提交询价后，我们将继续协助来源匹配、清单整理、报价确认与后续商务对接。</p>
           </div>
         </div>
 
-        <div class="procurement-grid">
-          <div class="timeline">
-            <article v-for="step in procurementTimeline" :key="step.index" class="timeline-step">
+        <div class="procurement-grid procurement-process-grid">
+          <div class="timeline procurement-timeline">
+            <article
+              v-for="step in procurementTimeline"
+              :key="step.index"
+              class="timeline-step procurement-timeline-step"
+            >
               <strong>{{ step.index }}</strong>
               <div>
                 <h3>{{ step.title }}</h3>
@@ -106,8 +146,12 @@ useSeoMeta({
             </article>
           </div>
 
-          <div class="stack-lg">
-            <article v-for="point in procurementSupportPoints" :key="point.title" class="panel">
+          <div class="stack-lg procurement-support-grid">
+            <article
+              v-for="point in procurementSupportPoints"
+              :key="point.title"
+              class="panel procurement-support-panel"
+            >
               <h3>{{ point.title }}</h3>
               <p>{{ point.summary }}</p>
             </article>
@@ -116,63 +160,5 @@ useSeoMeta({
       </div>
     </section>
 
-    <section class="section">
-      <div class="section-inner">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">提交代采询价前，建议先准备这些信息</h2>
-            <p>提前准备关键信息，有助于更快完成来源匹配与正式报价。</p>
-          </div>
-        </div>
-
-        <div class="service-grid">
-          <article class="card">
-            <h3>品牌、产品名与货号</h3>
-            <p>优先提供品牌、产品名称、货号或 Catalog No.，方便快速定位具体商品与可采购来源。</p>
-          </article>
-
-          <article class="card">
-            <h3>数量、规格与交期</h3>
-            <p>说明采购数量、包装规格、是否急单，以及是否需要拆分到货，能减少后续来回确认。</p>
-          </article>
-
-          <article class="card">
-            <h3>平台偏好与商务要求</h3>
-            <p>如需走锐竞采购平台、喀斯玛平台下单，或有开票、收货、合同资料要求，也建议在询价时一并说明。</p>
-          </article>
-        </div>
-
-        <div class="button-row procurement-next-actions">
-          <NuxtLink class="button button-primary" to="/quote?mode=procurement">
-            立即提交代采询价
-          </NuxtLink>
-          <NuxtLink class="button button-secondary" to="/contact">
-            提交商务咨询
-          </NuxtLink>
-        </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="section-inner">
-        <div class="cta-band">
-          <div>
-            <h2 class="section-title">已有品牌、货号或平台偏好，欢迎直接提交代采询价</h2>
-            <p class="section-copy">
-              我们会根据需求继续跟进来源匹配、清单整理、报价与交付安排。
-            </p>
-          </div>
-
-          <div class="actions">
-            <NuxtLink class="button button-primary" to="/quote?mode=procurement">
-              提交代采询价
-            </NuxtLink>
-            <NuxtLink class="button button-secondary" to="/">
-              返回官网首页
-            </NuxtLink>
-          </div>
-        </div>
-      </div>
-    </section>
   </div>
 </template>

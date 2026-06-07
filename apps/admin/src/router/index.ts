@@ -120,8 +120,19 @@ const adminChildRoutes = [
   },
 ] as const
 
+function detectRouterBase() {
+  if (typeof window === 'undefined') {
+    return '/'
+  }
+
+  return window.location.pathname === '/dashboard' ||
+    window.location.pathname.startsWith('/dashboard/')
+    ? '/dashboard/'
+    : '/'
+}
+
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(detectRouterBase()),
   routes: [
     {
       path: '/login',

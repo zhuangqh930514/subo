@@ -231,7 +231,7 @@ async function loadDashboard() {
             <template #default="{ row }">
               <el-tag
                 :type="tagTypeByStatus(row.status)"
-                effect="dark"
+                effect="plain"
                 round
               >
                 {{ row.status }}
@@ -271,7 +271,7 @@ async function loadDashboard() {
                 <strong>{{ item.title }}</strong>
                 <el-tag
                   :type="tagTypeByTone(item.tone)"
-                  effect="dark"
+                  effect="plain"
                   round
                 >
                   {{ item.action }}
@@ -328,7 +328,7 @@ async function loadDashboard() {
   padding: 18px;
   border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(15, 23, 42, 0.03);
 }
 
 .structure-head,

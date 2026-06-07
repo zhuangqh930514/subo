@@ -9,24 +9,48 @@ useSeoMeta({
   description: "展示溯博生物技术服务范围，并可直接进入报价中心提交询价。"
 });
 
+const SERVICE_ENTRY_STAGGER_MS = 46;
+const SERVICE_ENTRY_MAX_DELAY_MS = 860;
+
 const groupedProjects = computed(() => {
+  let projectEntryIndex = 0;
+
   return catalog.value.categories.map((category) => ({
     category: category.name,
     description: category.description,
-    projects: category.projects,
+    projects: category.projects.map((project) => ({
+      ...project,
+      entryIndex: projectEntryIndex++,
+    })),
   }));
 });
+
+const serviceEntryVectors = [
+  { x: "-220px", y: "-150px", rotate: "-10deg" },
+  { x: "0px", y: "-190px", rotate: "-7deg" },
+  { x: "220px", y: "-150px", rotate: "10deg" },
+  { x: "-240px", y: "0px", rotate: "-8deg" },
+  { x: "240px", y: "0px", rotate: "8deg" },
+  { x: "-220px", y: "160px", rotate: "-10deg" },
+  { x: "0px", y: "210px", rotate: "7deg" },
+  { x: "220px", y: "160px", rotate: "10deg" },
+];
+
+function getServiceProjectEntryStyle(entryIndex: number) {
+  const vector = serviceEntryVectors[entryIndex % serviceEntryVectors.length];
+  const entryDelay = Math.min(entryIndex * SERVICE_ENTRY_STAGGER_MS, SERVICE_ENTRY_MAX_DELAY_MS);
+
+  return {
+    "--service-entry-delay": `${entryDelay}ms`,
+    "--service-entry-x": vector.x,
+    "--service-entry-y": vector.y,
+    "--service-entry-rotate": vector.rotate,
+  };
+}
 </script>
 
 <template>
-  <div class="page-wrap">
-    <section class="page-hero shell">
-      <h1>技术服务覆盖科研常用方向，支持按项目快速询价</h1>
-      <p class="lead">
-        围绕动物实验、病理、分子、蛋白、细胞与理化等方向展示服务能力。需要正式询价时，可直接进入报价中心提交需求。
-      </p>
-    </section>
-
+  <div class="page-wrap services-page">
     <section class="section">
       <div class="shell stack-lg">
         <article v-if="catalogPending" class="content-card">
@@ -47,24 +71,24 @@ const groupedProjects = computed(() => {
         <article
           v-for="group in groupedProjects"
           :key="group.category"
-          class="content-card"
+          class="content-card service-project-group"
+          :aria-label="`${group.category}服务项目`"
         >
-          <div class="section-row">
-            <div>
-              <h2>{{ group.category }}</h2>
-              <p v-if="group.description" class="section-copy">{{ group.description }}</p>
-            </div>
-            <NuxtLink
-              class="button button-primary"
-              :to="{ path: '/quote', query: { category: group.category } }"
-            >
-              进入报价中心
-            </NuxtLink>
+          <div class="service-project-heading">
+            <h2>{{ group.category }}</h2>
           </div>
+
           <div class="card-grid card-grid-4">
-            <article v-for="project in group.projects" :key="project.id" class="mini-card">
+            <NuxtLink
+              v-for="project in group.projects"
+              :key="project.id"
+              class="mini-card service-project-card"
+              :to="{ path: '/quote', query: { category: group.category, project: project.name } }"
+              :aria-label="`查看${group.category}下的${project.name}报价`"
+              :style="getServiceProjectEntryStyle(project.entryIndex)"
+            >
               <strong>{{ project.name }}</strong>
-            </article>
+            </NuxtLink>
           </div>
         </article>
 

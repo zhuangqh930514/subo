@@ -463,7 +463,7 @@ function permissionTone(length: number) {
                 <div class="status-cell">
                   <el-tag
                     :type="row.status === 'active' ? 'success' : 'info'"
-                    effect="dark"
+                    effect="plain"
                   >
                     {{ row.statusLabel }}
                   </el-tag>
@@ -566,7 +566,7 @@ function permissionTone(length: number) {
                     <p>{{ role.description || '内置角色，用于静态权限映射。' }}</p>
                   </div>
                   <el-tag
-                    effect="dark"
+                    effect="plain"
                     :type="permissionTone(role.permissions.length)"
                   >
                     {{ role.memberCount }} 人

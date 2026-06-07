@@ -57,9 +57,9 @@ export interface PriceBand {
 export const companyProfile = {
   name: "广州溯博生物科技有限公司",
   subtitle: "技术服务 · 试剂耗材代采 · 商务协同",
-  heroTitle: "溯源科学，博行致远",
+  heroTitle: "科研服务、试剂代采、商务协同，同屏推进。",
   heroSummary:
-    "广州溯博生物科技有限公司面向高校、医院、科研团队与企业客户，提供技术服务、试剂耗材代采与商务协同支持。",
+    "面向高校、医院、科研团队与企业客户，提供技术服务报价、试剂耗材代采和商务对接支持。",
   intro:
     "聚焦科研场景下的技术服务、试剂耗材代采与项目协同，帮助客户更高效推进实验、采购与交付流程。",
   eyebrow: "广州溯博生物科技有限公司"
@@ -68,8 +68,9 @@ export const companyProfile = {
 export const primaryNav: NavItem[] = [
   { label: "首页", to: "/" },
   { label: "技术服务", to: "/services" },
-  { label: "试剂耗材代采", to: "/procurement" },
   { label: "报价中心", to: "/quote" },
+  { label: "试剂耗材代采", to: "/procurement" },
+  { label: "实习生招募", to: "/internship" },
   { label: "联系我们", to: "/contact" }
 ];
 
@@ -83,17 +84,39 @@ export const heroStats: HeroStat[] = [
 export const businessLines: BusinessLine[] = [
   {
     eyebrow: "技术服务线",
-    title: "技术服务报价",
-    summary: "覆盖病理、分子病理、蛋白、细胞、理化与动物实验等方向，适合按项目检索并提交询价。",
-    ctaLabel: "查看服务报价",
+    title: "进入报价中心",
+    summary: "按服务分类、项目名称、规格和价格快速筛选，形成正式询价清单。",
+    ctaLabel: "进入报价中心",
     ctaTo: "/quote"
   },
   {
     eyebrow: "采购协同线",
-    title: "试剂耗材代采",
-    summary: "支持按品牌、货号、规格与平台偏好提交询价，由商务团队继续跟进采购清单与交付协同。",
-    ctaLabel: "进入代采页",
-    ctaTo: "/procurement"
+    title: "提交代采询价",
+    summary: "按品牌、货号、规格和平台偏好提交需求，由商务继续确认清单。",
+    ctaLabel: "提交代采询价",
+    ctaTo: "/quote?mode=procurement"
+  },
+  {
+    eyebrow: "正式协同线",
+    title: "联系商务团队",
+    summary: "承接报价、合同、开票、采购和交付沟通，适合复杂项目推进。",
+    ctaLabel: "联系商务团队",
+    ctaTo: "/contact"
+  }
+];
+
+export const internshipCards: ContentCard[] = [
+  {
+    title: "科研服务助理实习生",
+    summary: "协助整理技术服务目录、项目资料和客户需求，适合生命科学、生物技术、医学相关专业。"
+  },
+  {
+    title: "试剂耗材代采实习生",
+    summary: "协助核对品牌、货号、规格和采购平台信息，适合细致、愿意了解科研采购流程的同学。"
+  },
+  {
+    title: "商务运营实习生",
+    summary: "协助询价记录、客户沟通资料和交付跟进，适合希望接触科研服务商业化流程的同学。"
   }
 ];
 

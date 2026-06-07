@@ -1121,7 +1121,7 @@ function inferContractName(fileName: string) {
   padding: 14px;
   border: 1px solid var(--app-border);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(15, 23, 42, 0.03);
 }
 
 .mini-metric span {
@@ -1159,7 +1159,7 @@ function inferContractName(fileName: string) {
   padding: 12px 14px;
   border: 1px solid var(--app-border);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(15, 23, 42, 0.03);
 }
 
 .summary-chip span,

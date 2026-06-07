@@ -7,6 +7,7 @@ import {
 import {
   mapCatalogItemsToQuoteItems,
   useQuoteCenter,
+  type QuoteFeedbackTone,
   type QuoteMode
 } from "~/composables/useQuoteCenter";
 import { useServiceCatalogData } from "~/composables/useServiceCatalogData";
@@ -23,6 +24,8 @@ const { catalog, catalogError, catalogPending, isFallback } = useServiceCatalogD
 const { contactItems, profile } = useSiteProfileData();
 const serviceItems = computed(() => mapCatalogItemsToQuoteItems(catalog.value.items));
 const quoteBoardRef = ref<HTMLElement | null>(null);
+const quoteHeroTitle = "技术服务与代采询价中心";
+const quoteHeroTitleChars = Array.from(quoteHeroTitle);
 
 const quote = useQuoteCenter(props.initialMode ?? "service", serviceItems, props.initialCategory);
 
@@ -43,6 +46,14 @@ watch(
     if (quote.activeCategory.value !== nextCategory) {
       quote.setCategory(nextCategory);
     }
+  },
+  { immediate: true }
+);
+
+watch(
+  () => route.query.project,
+  (value) => {
+    quote.updateKeyword(normalizeProject(value));
   },
   { immediate: true }
 );
@@ -91,6 +102,34 @@ const submitButtonLabel = computed(() => {
   return quote.mode.value === "service" ? "提交询价" : "提交代采需求";
 });
 
+const activeFeedback = computed(() => {
+  if (quote.isSubmitting.value) {
+    return {
+      tone: "pending" as const,
+      title: quote.mode.value === "service" ? "正在提交技术服务询价" : "正在提交代采需求",
+      detail: "系统正在生成受理记录，请稍候，不要重复点击提交按钮。"
+    };
+  }
+
+  return quote.feedback.value;
+});
+
+function getFeedbackToneLabel(tone: QuoteFeedbackTone) {
+  if (tone === "success") {
+    return "提交成功";
+  }
+
+  if (tone === "error") {
+    return "需要处理";
+  }
+
+  if (tone === "pending") {
+    return "提交中";
+  }
+
+  return "操作反馈";
+}
+
 function handleModeSwitch(nextMode: QuoteMode) {
   quote.switchMode(nextMode);
   router.replace({ path: "/quote", query: buildRouteQuery(nextMode, quote.activeCategory.value) });
@@ -121,6 +160,10 @@ function normalizeCategory(value: unknown) {
   return category.length > 0 && quote.categories.value.includes(category) ? category : "全部";
 }
 
+function normalizeProject(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("zh-CN", {
     style: "currency",
@@ -136,10 +179,16 @@ function formatCurrency(value: number) {
       <div class="section-inner">
         <div class="page-head-grid">
           <div>
-            <h1 class="section-title">技术服务与代采询价中心</h1>
-            <p class="section-copy">
-              技术服务支持按目录筛选并组合询价；试剂耗材代采支持提交需求，由商务团队继续跟进来源匹配、清单整理与后续报价。
-            </p>
+            <h1 class="section-title page-head__title" :aria-label="quoteHeroTitle">
+              <span
+                v-for="(char, charIndex) in quoteHeroTitleChars"
+                :key="`quote-hero-${charIndex}`"
+                class="page-head__title-char"
+                :style="{ '--char-index': charIndex }"
+              >
+                {{ char }}
+              </span>
+            </h1>
           </div>
 
           <div class="segmented segmented-fill">
@@ -484,21 +533,40 @@ function formatCurrency(value: number) {
             提交后请保留受理编号，便于后续沟通与进度跟进。
           </div>
 
+          <article
+            v-if="activeFeedback"
+            class="quote-feedback"
+            :class="`quote-feedback--${activeFeedback.tone}`"
+            :aria-live="activeFeedback.tone === 'error' ? 'assertive' : 'polite'"
+          >
+            <div class="quote-feedback__head">
+              <strong>{{ activeFeedback.title }}</strong>
+              <span class="quote-feedback__badge">{{ getFeedbackToneLabel(activeFeedback.tone) }}</span>
+            </div>
+
+            <p>{{ activeFeedback.detail }}</p>
+
+            <div v-if="activeFeedback.referenceValue" class="quote-feedback__reference">
+              <span>{{ activeFeedback.referenceLabel }}</span>
+              <strong>{{ activeFeedback.referenceValue }}</strong>
+            </div>
+          </article>
+
           <div class="actions actions-fill">
             <button class="button button-secondary" type="button" @click="quote.copyCurrentSummary">
               复制询价内容
             </button>
             <button
               class="button button-primary"
+              :class="{ 'button-loading': quote.isSubmitting.value }"
               type="button"
               :disabled="quote.isSubmitting.value"
               @click="quote.submitCurrentRequest"
             >
-              {{ submitButtonLabel }}
+              <span v-if="quote.isSubmitting.value" class="button-spinner" aria-hidden="true"></span>
+              <span>{{ submitButtonLabel }}</span>
             </button>
           </div>
-
-          <p v-if="quote.message.value" class="feedback-copy">{{ quote.message.value }}</p>
 
           <div class="summary-meta">
             <strong>正式联系</strong>

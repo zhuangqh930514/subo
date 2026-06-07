@@ -8,6 +8,8 @@
     "dev:admin": "pnpm --filter @subo/admin dev",
     "dev:api": "pnpm --filter @subo/api start:dev",
     "build": "pnpm -r --if-present build",
+    "build:prod": "pnpm --filter @subo/admin build && NUXT_IGNORE_LOCK=1 pnpm --filter @subo/web build && pnpm --filter @subo/api build",
+    "deploy:prod": "bash ./scripts/deploy-prod.sh",
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck"
   }

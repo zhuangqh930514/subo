@@ -506,7 +506,7 @@ function sourceTagType(sourceKey: QuotePoolRecord['sourceKey']) {
           </el-table-column>
           <el-table-column label="状态" min-width="120">
             <template #default="{ row }">
-              <el-tag :type="statusTagType(row.statusKey)" effect="dark" round>
+              <el-tag :type="statusTagType(row.statusKey)" effect="plain" round>
                 {{ row.status }}
               </el-tag>
             </template>
@@ -548,7 +548,7 @@ function sourceTagType(sourceKey: QuotePoolRecord['sourceKey']) {
           <div class="detail-block">
             <div class="detail-head">
               <strong>{{ selectedRecord.customer }}</strong>
-              <el-tag :type="statusTagType(selectedRecord.statusKey)" effect="dark" round>
+              <el-tag :type="statusTagType(selectedRecord.statusKey)" effect="plain" round>
                 {{ selectedRecord.status }}
               </el-tag>
             </div>
@@ -937,7 +937,7 @@ function sourceTagType(sourceKey: QuotePoolRecord['sourceKey']) {
   padding: 16px;
   border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(15, 23, 42, 0.03);
 }
 
 .detail-block h4,
@@ -962,7 +962,7 @@ function sourceTagType(sourceKey: QuotePoolRecord['sourceKey']) {
   gap: 12px;
   padding: 14px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(15, 23, 42, 0.03);
 }
 
 .item-card span {

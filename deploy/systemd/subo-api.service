@@ -1,0 +1,18 @@
+[Unit]
+Description=Subo API
+After=network.target mysql.service mariadb.service
+
+[Service]
+Type=simple
+User=www
+Group=www
+WorkingDirectory=/www/wwwroot/subo-deploy/api
+Environment=NODE_ENV=production
+Environment=PORT=3006
+EnvironmentFile=-/www/wwwroot/subo-deploy/shared/subo-api.env
+ExecStart=/usr/local/bin/node /www/wwwroot/subo-deploy/api/dist/main.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -42,10 +42,13 @@ const fallbackCatalog = buildFallbackCatalog();
 
 export function useServiceCatalogData() {
   const runtimeConfig = useRuntimeConfig();
+  const apiBase = import.meta.server
+    ? runtimeConfig.apiInternalBase
+    : runtimeConfig.public.apiBase;
 
   const { data, error, pending, refresh } = useAsyncData<ServiceCatalogResponse>(
     "service-catalog-public",
-    () => $fetch(`${runtimeConfig.public.apiBase}/service-catalog/catalog`),
+    () => $fetch(`${apiBase}/service-catalog/catalog`),
     {
       default: () => fallbackCatalog,
     },

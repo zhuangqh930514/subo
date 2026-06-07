@@ -476,6 +476,12 @@ export function updateCustomer(id: string, payload: SaveCustomerPayload) {
   })
 }
 
+export function deleteCustomer(id: string) {
+  return requestJson<{ message: string }>(`/admin/customers/${id}`, {
+    method: 'DELETE',
+  })
+}
+
 export function fetchInvoiceProfiles(query: InvoiceProfileListQuery = {}) {
   return requestJson<PagedResponse<InvoiceProfileListRecord>>(
     `/admin/invoice-profiles${toQueryString(query)}`,

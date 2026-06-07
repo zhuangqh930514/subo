@@ -1,6 +1,6 @@
 import { getAdminAccessToken, handleUnauthorizedAuth } from '../auth/session'
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://127.0.0.1:3006/api'
+const API_BASE = resolveApiBase()
 
 interface JsonRequestInit extends RequestInit {
   skipAuth?: boolean
@@ -44,4 +44,18 @@ export async function requestJson<T>(path: string, init?: JsonRequestInit): Prom
 
 export function resolveApiUrl(path: string) {
   return `${API_BASE}${path}`
+}
+
+function resolveApiBase() {
+  const configuredBase = import.meta.env.VITE_API_BASE
+
+  if (configuredBase && configuredBase.length > 0) {
+    return configuredBase.replace(/\/$/, '')
+  }
+
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/api`
+  }
+
+  return '/api'
 }

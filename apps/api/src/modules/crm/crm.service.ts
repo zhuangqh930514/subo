@@ -730,6 +730,86 @@ export class CrmService {
     };
   }
 
+  async deleteCustomer(id: number, userId?: number) {
+    if (!this.prisma.isConfigured) {
+      throw new BadRequestException('当前环境未配置数据库，无法删除客户。');
+    }
+
+    const existing = await this.prisma.customer.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!existing) {
+      throw new NotFoundException(`未找到 ID=${id} 的客户。`);
+    }
+
+    const [invoiceProfileCount, orderCount, quoteRequestCount, contractCount, procurementListCount] =
+      await this.prisma.$transaction([
+        this.prisma.invoiceProfile.count({
+          where: {
+            customerId: id,
+            deletedAt: null,
+          },
+        }),
+        this.prisma.order.count({
+          where: {
+            customerId: id,
+            deletedAt: null,
+          },
+        }),
+        this.prisma.quoteRequest.count({
+          where: {
+            customerId: id,
+            deletedAt: null,
+          },
+        }),
+        this.prisma.contract.count({
+          where: {
+            customerId: id,
+            deletedAt: null,
+          },
+        }),
+        this.prisma.procurementList.count({
+          where: {
+            customerId: id,
+            deletedAt: null,
+          },
+        }),
+      ]);
+
+    if (
+      invoiceProfileCount > 0 ||
+      orderCount > 0 ||
+      quoteRequestCount > 0 ||
+      contractCount > 0 ||
+      procurementListCount > 0
+    ) {
+      throw new BadRequestException(
+        '该客户仍有关联的抬头、订单、询价、合同或采购清单，暂不支持删除。',
+      );
+    }
+
+    await this.prisma.customer.update({
+      where: {
+        id,
+      },
+      data: {
+        deletedAt: new Date(),
+        updatedBy: userId,
+      },
+    });
+
+    return {
+      message: '客户已删除。',
+    };
+  }
+
   async listInvoiceProfiles(query: InvoiceProfileListQuery) {
     if (!this.prisma.isConfigured) {
       return {

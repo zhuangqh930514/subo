@@ -491,7 +491,7 @@ function rowClassName(payload: { row: ServiceCatalogItemRecord }) {
             <div class="selection-indicator">
               <el-tag
                 :type="hasSelection ? 'primary' : 'info'"
-                effect="dark"
+                effect="plain"
               >
                 {{ selectionSummary }}
               </el-tag>
@@ -610,7 +610,7 @@ function rowClassName(payload: { row: ServiceCatalogItemRecord }) {
             <template #default="{ row }">
               <el-tag
                 :type="getStatusTagType(row.status)"
-                effect="dark"
+                effect="plain"
                 round
               >
                 {{ getStatusLabel(row.status) }}
@@ -667,7 +667,7 @@ function rowClassName(payload: { row: ServiceCatalogItemRecord }) {
               </el-tag>
               <el-tag
                 :type="getStatusTagType(selectedItem.status)"
-                effect="dark"
+                effect="plain"
                 round
               >
                 {{ getStatusLabel(selectedItem.status) }}
@@ -1031,7 +1031,7 @@ function rowClassName(payload: { row: ServiceCatalogItemRecord }) {
   padding: 12px 14px;
   border: 1px solid var(--app-border);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(15, 23, 42, 0.03);
 }
 
 .selection-indicator {
@@ -1145,7 +1145,7 @@ function rowClassName(payload: { row: ServiceCatalogItemRecord }) {
   padding: 12px 14px;
   border: 1px solid var(--app-border);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(15, 23, 42, 0.03);
 }
 
 .detail-row span,

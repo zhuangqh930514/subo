@@ -4,6 +4,9 @@ import { useSiteProfileData } from "~/composables/useSiteProfileData";
 
 const { profile } = useSiteProfileData();
 const runtimeConfig = useRuntimeConfig();
+const apiBase = import.meta.server
+  ? runtimeConfig.apiInternalBase
+  : runtimeConfig.public.apiBase;
 const isSubmitting = ref(false);
 const feedbackMessage = ref("");
 
@@ -14,6 +17,9 @@ const contactForm = reactive({
   subject: "",
   message: "",
 });
+
+const contactHeroTitle = "欢迎联系溯博生物，提交技术服务或代采需求";
+const contactHeroTitleChars = Array.from(contactHeroTitle);
 
 async function submitContactRequest() {
   const validationError = validateContactForm();
@@ -31,7 +37,7 @@ async function submitContactRequest() {
       persisted: boolean;
       status: string;
       message: string;
-    }>(`${runtimeConfig.public.apiBase}/quotes/contact`, {
+    }>(`${apiBase}/quotes/contact`, {
       method: "POST",
       body: {
         contactName: contactForm.name.trim(),
@@ -106,10 +112,16 @@ function extractErrorMessage(error: unknown) {
 <template>
   <div class="page-wrap">
     <section class="page-hero shell">
-      <h1>欢迎联系溯博生物，提交技术服务或代采需求</h1>
-      <p class="lead">
-        您可以通过本页了解正式联系方式，并直接提交检测、代采或商务咨询内容。
-      </p>
+      <h1 class="page-hero__title" :aria-label="contactHeroTitle">
+        <span
+          v-for="(char, charIndex) in contactHeroTitleChars"
+          :key="`contact-hero-${charIndex}`"
+          class="page-hero__title-char"
+          :style="{ '--char-index': charIndex }"
+        >
+          {{ char }}
+        </span>
+      </h1>
     </section>
 
     <section class="section">

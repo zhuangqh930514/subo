@@ -600,7 +600,7 @@ function toBoolean(value: BooleanFilter) {
                   <div class="detail-meta">{{ item.projectName }}</div>
                   <div class="detail-meta">
                     {{ item.amountLabel }} ·
-                    <el-tag :type="paymentTag(item.isPaid)" effect="dark" round size="small">
+                    <el-tag :type="paymentTag(item.isPaid)" effect="plain" round size="small">
                       {{ item.paymentStatusLabel }}
                     </el-tag>
                   </div>
@@ -647,7 +647,7 @@ function toBoolean(value: BooleanFilter) {
                   </div>
                   <div class="detail-item__head">
                     <span class="detail-meta">{{ item.updatedAtLabel }}</span>
-                    <el-tag :type="quoteStatusTag(item.status)" effect="dark" round size="small">
+                    <el-tag :type="quoteStatusTag(item.status)" effect="plain" round size="small">
                       {{ item.statusLabel }}
                     </el-tag>
                   </div>
@@ -843,7 +843,7 @@ function toBoolean(value: BooleanFilter) {
   padding: 14px;
   border: 1px solid var(--app-border);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(15, 23, 42, 0.03);
 }
 
 .mini-metric {

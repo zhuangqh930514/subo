@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import HomeHero from "~/components/home/HomeHero.vue";
+import HomeInternRecruitment from "~/components/home/HomeInternRecruitment.vue";
 import HomeProcurementOverview from "~/components/home/HomeProcurementOverview.vue";
 import HomeServiceOverview from "~/components/home/HomeServiceOverview.vue";
 import HomeWorkflow from "~/components/home/HomeWorkflow.vue";
@@ -19,5 +20,6 @@ useSeoMeta({
     <HomeServiceOverview />
     <HomeProcurementOverview />
     <HomeWorkflow />
+    <HomeInternRecruitment />
   </div>
 </template>

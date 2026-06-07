@@ -60,6 +60,16 @@ interface QuoteRequestResponse {
   message: string;
 }
 
+export type QuoteFeedbackTone = 'pending' | 'success' | 'error' | 'info';
+
+export interface QuoteFeedback {
+  tone: QuoteFeedbackTone;
+  title: string;
+  detail: string;
+  referenceLabel?: string;
+  referenceValue?: string;
+}
+
 const fallbackQuoteServiceItems: QuoteServiceItem[] = fallbackServiceItems.map((item) => ({
   id: item.code,
   code: item.code,
@@ -77,12 +87,15 @@ export function useQuoteCenter(
   initialCategory = "全部",
 ) {
   const runtimeConfig = useRuntimeConfig();
+  const apiBase = import.meta.server
+    ? runtimeConfig.apiInternalBase
+    : runtimeConfig.public.apiBase;
   const mode = ref<QuoteMode>(initialMode);
   const keyword = ref("");
   const activeCategory = ref(initialCategory);
   const activePriceBand = ref("all");
   const serviceCart = ref<Record<string, number>>({});
-  const message = ref("");
+  const feedback = ref<QuoteFeedback | null>(null);
   const isSubmitting = ref(false);
   const serviceItems = computed(() => toValue(serviceItemsSource));
 
@@ -170,7 +183,7 @@ export function useQuoteCenter(
 
   function switchMode(nextMode: QuoteMode) {
     mode.value = nextMode;
-    message.value = "";
+    feedback.value = null;
   }
 
   function setCategory(category: string) {
@@ -254,44 +267,70 @@ export function useQuoteCenter(
     const text = mode.value === "service" ? buildServiceSummary() : buildProcurementSummary();
 
     if (!import.meta.client || !navigator.clipboard) {
-      message.value = "当前环境没有剪贴板权限，已保留页面摘要。";
+      feedback.value = {
+        tone: "info",
+        title: "当前环境不支持复制",
+        detail: "浏览器没有授予剪贴板权限，您仍可直接查看右侧摘要内容。"
+      };
       return;
     }
 
     try {
       await navigator.clipboard.writeText(text);
-      message.value = "已复制当前询价内容，可直接发给商务或留存。";
+      feedback.value = {
+        tone: "success",
+        title: "已复制询价内容",
+        detail: "可以直接发送给商务同事，或先留存后再统一提交。"
+      };
     } catch {
-      message.value = "复制失败，浏览器暂未授予剪贴板权限。";
+      feedback.value = {
+        tone: "error",
+        title: "复制失败",
+        detail: "浏览器暂未授予剪贴板权限，请稍后重试或直接手动复制摘要内容。"
+      };
     }
   }
 
   async function submitCurrentRequest() {
     const validationError = validateCurrentRequest();
     if (validationError) {
-      message.value = validationError;
+      feedback.value = {
+        tone: "error",
+        title: "提交前还缺少信息",
+        detail: validationError
+      };
       return;
     }
 
     isSubmitting.value = true;
-    message.value = "";
+    feedback.value = null;
 
     try {
       const response = await $fetch<QuoteRequestResponse>(
-        `${runtimeConfig.public.apiBase}/quotes/requests`,
+        `${apiBase}/quotes/requests`,
         {
           method: "POST",
           body: buildRequestPayload()
         }
       );
 
-      message.value = response.persisted
-        ? `已提交成功，询价单号 ${response.quoteNo}，我们会尽快与您联系。`
-        : `已生成询价单号 ${response.quoteNo}，请保留编号，方便后续继续沟通。`;
+      feedback.value = {
+        tone: response.persisted ? "success" : "info",
+        title: response.persisted ? "询价已提交成功" : "询价已受理",
+        detail: response.persisted
+          ? `系统已生成受理记录。${response.message}`
+          : `当前环境已先生成受理编号。${response.message}`,
+        referenceLabel: "受理编号",
+        referenceValue: response.quoteNo
+      };
 
       resetCurrentDraft();
     } catch (error) {
-      message.value = extractErrorMessage(error);
+      feedback.value = {
+        tone: "error",
+        title: "提交失败",
+        detail: extractErrorMessage(error)
+      };
     } finally {
       isSubmitting.value = false;
     }
@@ -386,10 +425,10 @@ export function useQuoteCenter(
     contactForm,
     copyCurrentSummary,
     decreaseService,
+    feedback,
     increaseService,
     isSubmitting,
     keyword,
-    message,
     mode,
     priceBands,
     procurementCompletionCount,

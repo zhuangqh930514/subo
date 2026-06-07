@@ -8,7 +8,6 @@ import { procurementPlatforms, procurementTimeline } from "~/data/mock";
       <div class="section-header">
         <div>
           <h2 class="section-title">试剂耗材代采支持按需求提交询价</h2>
-          <p>围绕品牌、货号、规格与平台偏好收集需求，并继续协助来源匹配、清单整理与商务跟进。</p>
         </div>
       </div>
 

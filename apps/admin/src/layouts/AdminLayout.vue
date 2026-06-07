@@ -257,8 +257,8 @@ async function handleLogout() {
   border: 1px solid var(--app-border-strong);
   border-radius: 8px;
   background:
-    linear-gradient(180deg, rgba(20, 24, 33, 0.98), rgba(12, 15, 22, 0.96)),
-    rgba(9, 9, 11, 0.9);
+    linear-gradient(180deg, rgba(15, 23, 42, 0.025), rgba(15, 23, 42, 0.01)),
+    #ffffff;
   box-shadow: var(--app-shadow-lg);
 }
 
@@ -267,7 +267,7 @@ async function handleLogout() {
   align-items: center;
   gap: 14px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--app-border);
 }
 
 .brand-logo {
@@ -275,7 +275,7 @@ async function handleLogout() {
   height: 42px;
   border-radius: 8px;
   object-fit: cover;
-  box-shadow: 0 20px 30px rgba(8, 15, 32, 0.35);
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.1);
 }
 
 .brand-copy {
@@ -341,23 +341,23 @@ async function handleLogout() {
 }
 
 .side-link:hover {
-  border-color: rgba(95, 125, 166, 0.28);
-  background: rgba(19, 27, 44, 0.85);
+  border-color: rgba(12, 92, 171, 0.22);
+  background: rgba(12, 92, 171, 0.06);
   color: var(--app-text);
   transform: translateY(-1px);
 }
 
 .side-link.is-active {
   border-color: rgba(12, 92, 171, 0.42);
-  background: linear-gradient(90deg, rgba(12, 92, 171, 0.24), rgba(15, 23, 42, 0.92));
-  color: #ffffff;
-  box-shadow: inset 0 0 0 1px rgba(140, 190, 255, 0.08);
+  background: linear-gradient(90deg, rgba(12, 92, 171, 0.14), rgba(12, 92, 171, 0.04));
+  color: var(--app-text);
+  box-shadow: inset 0 0 0 1px rgba(12, 92, 171, 0.08);
 }
 
 .side-link.is-disabled {
   justify-content: space-between;
-  border-color: rgba(255, 255, 255, 0.04);
-  color: rgba(156, 163, 175, 0.74);
+  border-color: rgba(15, 23, 42, 0.06);
+  color: rgba(15, 23, 42, 0.4);
   cursor: not-allowed;
 }
 
@@ -367,7 +367,7 @@ async function handleLogout() {
 
 .side-link__badge {
   margin-left: auto;
-  color: rgba(148, 163, 184, 0.74);
+  color: var(--app-text-dim);
   font-size: 12px;
 }
 
@@ -387,8 +387,8 @@ async function handleLogout() {
   border: 1px solid var(--app-border-strong);
   border-radius: 8px;
   background:
-    linear-gradient(120deg, rgba(15, 23, 42, 0.95), rgba(17, 24, 39, 0.82)),
-    rgba(17, 24, 39, 0.72);
+    linear-gradient(120deg, rgba(12, 92, 171, 0.06), rgba(16, 185, 129, 0.035)),
+    #ffffff;
   box-shadow: var(--app-shadow-md);
 }
 
@@ -424,9 +424,9 @@ async function handleLogout() {
   gap: 12px;
   min-height: 48px;
   padding: 0 14px 0 10px;
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid var(--app-border-strong);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
+  background: #ffffff;
 }
 
 .account-chip__avatar {
@@ -435,7 +435,7 @@ async function handleLogout() {
   width: 34px;
   height: 34px;
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(12, 92, 171, 0.9), rgba(17, 24, 39, 0.96));
+  background: linear-gradient(135deg, rgba(12, 92, 171, 0.94), rgba(11, 61, 126, 0.96));
   color: #ffffff;
   font-size: 13px;
   font-weight: 700;
