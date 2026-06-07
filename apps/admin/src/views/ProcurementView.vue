@@ -1154,6 +1154,7 @@ function isProcurementDetailRecord(
 
     <el-dialog
       v-model="detailDialogVisible"
+      class="detail-modal"
       :title="detailDialogTitle"
       width="960px"
       destroy-on-close
@@ -1169,66 +1170,78 @@ function isProcurementDetailRecord(
         />
 
         <template v-else-if="detailRecord">
-          <section class="detail-section">
-            <div class="detail-head">
-              <div>
-                <h4>{{ detailRecord.title || detailRecord.listNo }}</h4>
-                <p>{{ detailRecord.platform }} · {{ detailRecord.updatedAt }}</p>
+          <div class="detail-shell">
+            <section class="detail-hero">
+              <div class="detail-hero__copy">
+                <span class="detail-hero__label">代采清单</span>
+                <h3>{{ detailRecord.title || detailRecord.listNo }}</h3>
+                <p class="detail-hero__summary">
+                  平台 {{ detailRecord.platform }} / 更新于 {{ detailRecord.updatedAt }}
+                </p>
               </div>
 
-              <div class="detail-head__actions">
-                <el-tag :type="recordTagType(detailRecord.status)" effect="plain" round>
-                  {{ detailRecord.statusLabel }}
-                </el-tag>
-                <el-button
-                  v-if="detailRecord.downloadUrl"
-                  :icon="Download"
-                  link
-                  type="primary"
-                  @click="openDownloadUrl(detailRecord.downloadUrl)"
-                >
-                  下载
-                </el-button>
+              <div class="detail-hero__aside">
+                <div class="detail-hero__meta">
+                  <el-tag :type="recordTagType(detailRecord.status)" effect="plain" round>
+                    {{ detailRecord.statusLabel }}
+                  </el-tag>
+                </div>
+                <div class="detail-panel-actions">
+                  <el-button
+                    v-if="detailRecord.downloadUrl"
+                    :icon="Download"
+                    type="primary"
+                    @click="openDownloadUrl(detailRecord.downloadUrl)"
+                  >
+                    下载清单
+                  </el-button>
+                </div>
               </div>
-            </div>
+            </section>
 
-            <div class="detail-kv-grid">
-              <div class="detail-kv">
+            <div class="detail-metric-grid">
+              <article class="detail-metric-card">
                 <span>清单编号</span>
                 <strong>{{ detailRecord.listNo }}</strong>
-              </div>
-              <div class="detail-kv">
+              </article>
+              <article class="detail-metric-card">
                 <span>关联对象</span>
                 <strong>{{ detailRecord.relatedInquiry }}</strong>
-              </div>
-              <div class="detail-kv">
+              </article>
+              <article class="detail-metric-card">
                 <span>关联订单</span>
                 <strong>{{ detailRecord.relatedOrder || '-' }}</strong>
-              </div>
-              <div class="detail-kv">
+              </article>
+              <article class="detail-metric-card">
                 <span>条目数 / 金额</span>
                 <strong>{{ detailRecord.itemCount }} 项 / {{ detailRecord.totalAmountLabel }}</strong>
+              </article>
+            </div>
+
+            <section class="detail-section-card">
+              <div class="detail-section-card__head">
+                <div>
+                  <strong>备注</strong>
+                  <p>记录平台导出后的补充说明和商务处理备注。</p>
+                </div>
               </div>
-            </div>
-          </section>
+              <div class="detail-copy-card">{{ detailRecord.remark || '暂无备注' }}</div>
+            </section>
 
-          <section class="detail-section">
-            <div class="detail-section__head">
-              <h4>备注</h4>
-            </div>
-            <p class="detail-remark">{{ detailRecord.remark || '暂无备注' }}</p>
-          </section>
+            <section class="detail-section-card">
+              <div class="detail-section-card__head">
+                <div>
+                  <strong>清单条目</strong>
+                  <p>逐项查看产品名、规格、数量、单价和采购链接。</p>
+                </div>
+              </div>
 
-          <section class="detail-section">
-            <div class="detail-section__head">
-              <h4>清单条目</h4>
-            </div>
-
-            <el-table
-              :data="detailRecord.items"
-              class="admin-table"
-              empty-text="当前清单没有条目。"
-            >
+              <div class="detail-table-shell">
+                <el-table
+                  :data="detailRecord.items"
+                  class="admin-table"
+                  empty-text="当前清单没有条目。"
+                >
               <el-table-column label="产品名称" min-width="240">
                 <template #default="{ row }">
                   <div class="product-cell">
@@ -1282,8 +1295,10 @@ function isProcurementDetailRecord(
                   </div>
                 </template>
               </el-table-column>
-            </el-table>
-          </section>
+                </el-table>
+              </div>
+            </section>
+          </div>
         </template>
       </div>
     </el-dialog>

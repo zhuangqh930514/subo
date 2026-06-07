@@ -564,70 +564,114 @@ async function handleDelete(row: AdminUserRecord) {
 
     <el-dialog
       v-model="detailDialogVisible"
+      class="detail-modal"
       :title="detailRecord ? `${detailRecord.displayName} 详情` : '管理员详情'"
       width="820px"
     >
       <template v-if="detailRecord">
-        <div class="detail-grid">
-          <div class="detail-card">
-            <span>用户名</span>
-            <strong>{{ detailRecord.username }}</strong>
-          </div>
-          <div class="detail-card">
-            <span>昵称</span>
-            <strong>{{ detailRecord.nickname || '-' }}</strong>
-          </div>
-          <div class="detail-card">
-            <span>邮箱</span>
-            <strong>{{ detailRecord.email || '-' }}</strong>
-          </div>
-          <div class="detail-card">
-            <span>手机号</span>
-            <strong>{{ detailRecord.phone || '-' }}</strong>
-          </div>
-          <div class="detail-card">
-            <span>状态</span>
-            <strong>{{ detailRecord.statusLabel }}</strong>
-          </div>
-          <div class="detail-card">
-            <span>最近登录</span>
-            <strong>{{ detailRecord.lastLoginAtLabel }}</strong>
-          </div>
-          <div class="detail-card">
-            <span>创建时间</span>
-            <strong>{{ detailRecord.createdAtLabel }}</strong>
-          </div>
-          <div class="detail-card">
-            <span>更新时间</span>
-            <strong>{{ detailRecord.updatedAtLabel }}</strong>
-          </div>
-        </div>
+        <div class="detail-shell">
+          <section class="detail-hero">
+            <div class="detail-hero__copy">
+              <span class="detail-hero__label">管理员档案</span>
+              <h3>{{ detailRecord.displayName }}</h3>
+              <p class="detail-hero__summary">
+                用户名 {{ detailRecord.username }} / 最近登录 {{ detailRecord.lastLoginAtLabel }}
+              </p>
+            </div>
+            <div class="detail-hero__aside">
+              <div class="detail-hero__meta">
+                <el-tag :type="detailRecord.status === 'active' ? 'success' : 'warning'" effect="plain" round>
+                  {{ detailRecord.statusLabel }}
+                </el-tag>
+              </div>
+              <span class="detail-hero__note">
+                已分配 {{ detailRecord.roles.length }} 个角色 / {{ detailRecord.permissions.length }} 条权限
+              </span>
+            </div>
+          </section>
 
-        <div class="detail-section">
-          <strong>角色</strong>
-          <div class="tag-list">
-            <el-tag
-              v-for="role in detailRecord.roles"
-              :key="role.id"
-              effect="plain"
-            >
-              {{ role.name }}
-            </el-tag>
+          <div class="detail-metric-grid">
+            <article class="detail-metric-card">
+              <span>用户名</span>
+              <strong>{{ detailRecord.username }}</strong>
+            </article>
+            <article class="detail-metric-card">
+              <span>状态</span>
+              <strong>{{ detailRecord.statusLabel }}</strong>
+            </article>
+            <article class="detail-metric-card">
+              <span>最近登录</span>
+              <strong>{{ detailRecord.lastLoginAtLabel }}</strong>
+            </article>
+            <article class="detail-metric-card">
+              <span>更新时间</span>
+              <strong>{{ detailRecord.updatedAtLabel }}</strong>
+            </article>
           </div>
-        </div>
 
-        <div class="detail-section">
-          <strong>权限</strong>
-          <div class="tag-list">
-            <el-tag
-              v-for="permission in detailRecord.permissions"
-              :key="permission"
-              effect="plain"
-              type="info"
-            >
-              {{ permission }}
-            </el-tag>
-          </div>
+          <section class="detail-section-card">
+            <div class="detail-section-card__head">
+              <div>
+                <strong>账号字段</strong>
+                <p>基础身份字段、联系方式和时间信息都在这里统一查看。</p>
+              </div>
+            </div>
+            <div class="detail-fact-grid">
+              <div class="detail-fact">
+                <span>昵称</span>
+                <strong>{{ detailRecord.nickname || '-' }}</strong>
+              </div>
+              <div class="detail-fact">
+                <span>邮箱</span>
+                <strong>{{ detailRecord.email || '-' }}</strong>
+              </div>
+              <div class="detail-fact">
+                <span>手机号</span>
+                <strong>{{ detailRecord.phone || '-' }}</strong>
+              </div>
+              <div class="detail-fact">
+                <span>创建时间</span>
+                <strong>{{ detailRecord.createdAtLabel }}</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="detail-section-card">
+            <div class="detail-section-card__head">
+              <div>
+                <strong>角色</strong>
+                <p>当前账号可直接承担的管理职责。</p>
+              </div>
+            </div>
+            <div class="detail-pill-row">
+              <el-tag
+                v-for="role in detailRecord.roles"
+                :key="role.id"
+                effect="plain"
+              >
+                {{ role.name }}
+              </el-tag>
+            </div>
+          </section>
+
+          <section class="detail-section-card">
+            <div class="detail-section-card__head">
+              <div>
+                <strong>权限</strong>
+                <p>用于确认这个管理员在后台可以访问到的具体操作范围。</p>
+              </div>
+            </div>
+            <div class="detail-pill-row">
+              <el-tag
+                v-for="permission in detailRecord.permissions"
+                :key="permission"
+                effect="plain"
+                type="info"
+              >
+                {{ permission }}
+              </el-tag>
+            </div>
+          </section>
         </div>
       </template>
 

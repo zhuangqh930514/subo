@@ -696,6 +696,7 @@ function inferContractName(fileName: string) {
 
     <el-dialog
       v-model="detailDialogVisible"
+      class="detail-modal"
       :title="detail ? detail.contractName : '合同详情'"
       width="960px"
     >
@@ -713,29 +714,56 @@ function inferContractName(fileName: string) {
       </div>
 
       <template v-else-if="detail">
-        <div class="detail-stack">
-          <div class="mini-metrics">
-            <article class="mini-metric">
+        <div class="detail-shell">
+          <section class="detail-hero">
+            <div class="detail-hero__copy">
+              <span class="detail-hero__label">合同档案</span>
+              <h3>{{ detail.contractName }}</h3>
+              <p class="detail-hero__summary">
+                文件 {{ detail.fileName }} / 来源 {{ detail.sourceLabel }} / 更新于 {{ detail.updatedAtLabel }}
+              </p>
+            </div>
+            <div class="detail-hero__aside">
+              <div class="detail-hero__meta">
+                <el-tag
+                  :type="detail.downloadAvailable ? 'success' : 'warning'"
+                  effect="plain"
+                  round
+                >
+                  {{ detail.sourceLabel }}
+                </el-tag>
+              </div>
+              <span class="detail-hero__note">
+                {{ detail.linkedOrder ? `已关联订单 ${detail.linkedOrder.orderNo}` : '当前仍待补挂单' }}
+              </span>
+            </div>
+          </section>
+
+          <div class="detail-metric-grid">
+            <article class="detail-metric-card">
               <span>文件大小</span>
               <strong>{{ detail.fileSizeLabel }}</strong>
             </article>
-            <article class="mini-metric">
+            <article class="detail-metric-card">
               <span>版本</span>
               <strong>v{{ detail.versionNo }}</strong>
             </article>
-            <article class="mini-metric">
+            <article class="detail-metric-card">
               <span>订单关联</span>
               <strong>{{ detail.linkedOrder ? '已关联' : '未关联' }}</strong>
             </article>
-            <article class="mini-metric">
+            <article class="detail-metric-card">
               <span>下载状态</span>
               <strong>{{ detail.downloadAvailable ? '可下载' : '仅元数据' }}</strong>
             </article>
           </div>
 
-          <div class="detail-block">
-            <div class="detail-block__head">
-              <strong>合同概况</strong>
+          <section class="detail-section-card">
+            <div class="detail-section-card__head">
+              <div>
+                <strong>合同概况</strong>
+                <p>保留名称、旧系统 ID、说明和基础版本信息，方便核对迁移结果。</p>
+              </div>
               <el-tag
                 :type="detail.downloadAvailable ? 'success' : 'warning'"
                 effect="plain"
@@ -744,71 +772,77 @@ function inferContractName(fileName: string) {
                 {{ detail.sourceLabel }}
               </el-tag>
             </div>
-            <div class="mini-list">
-              <div class="mini-item">
+            <div class="detail-fact-grid">
+              <div class="detail-fact">
                 <span class="admin-meta">合同名称</span>
                 <strong>{{ detail.contractName }}</strong>
               </div>
-              <div class="mini-item">
+              <div class="detail-fact">
                 <span class="admin-meta">旧系统 ID</span>
                 <strong>{{ detail.legacyContractId || '-' }}</strong>
               </div>
-              <div class="mini-item">
+              <div class="detail-fact">
                 <span class="admin-meta">说明</span>
                 <strong>{{ detail.description || '-' }}</strong>
               </div>
-              <div class="mini-item">
+              <div class="detail-fact">
                 <span class="admin-meta">创建 / 更新</span>
                 <strong>{{ detail.createdAtLabel }} / {{ detail.updatedAtLabel }}</strong>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div class="detail-block">
-            <div class="detail-block__head">
-              <strong>关联关系</strong>
+          <section class="detail-section-card">
+            <div class="detail-section-card__head">
+              <div>
+                <strong>关联关系</strong>
+                <p>确认这份合同已归属到哪张订单、哪位客户，以及当前是否待补链。</p>
+              </div>
               <span class="admin-meta">{{ detail.linkedOrder ? '已挂单' : '待补链' }}</span>
             </div>
-            <div class="mini-list">
-              <div class="mini-item">
+            <div class="detail-fact-grid">
+              <div class="detail-fact">
                 <span class="admin-meta">关联订单</span>
                 <strong>{{ detail.linkedOrder?.orderNo || '-' }}</strong>
               </div>
-              <div class="mini-item">
+              <div class="detail-fact">
                 <span class="admin-meta">订单项目</span>
                 <strong>{{ detail.linkedOrder?.projectName || '-' }}</strong>
               </div>
-              <div class="mini-item">
+              <div class="detail-fact">
                 <span class="admin-meta">关联客户</span>
                 <strong>{{ detail.linkedCustomer?.name || '-' }}</strong>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div class="detail-block">
-            <div class="detail-block__head">
-              <strong>文件档案</strong>
+          <section class="detail-section-card">
+            <div class="detail-section-card__head">
+              <div>
+                <strong>文件档案</strong>
+                <p>文件名、存储路径和下载动作统一放到这一块处理。</p>
+              </div>
               <span class="admin-meta">{{ detail.fileName }}</span>
             </div>
-            <div class="mini-list">
-              <div class="mini-item">
+            <div class="detail-fact-grid">
+              <div class="detail-fact">
                 <span class="admin-meta">文件名</span>
                 <strong>{{ detail.fileName }}</strong>
               </div>
-              <div class="mini-item">
+              <div class="detail-fact">
                 <span class="admin-meta">文件类型</span>
                 <strong>{{ detail.fileType.toUpperCase() }}</strong>
               </div>
-              <div class="mini-item">
+              <div class="detail-fact">
                 <span class="admin-meta">来源路径</span>
                 <strong>{{ detail.filePath || '-' }}</strong>
               </div>
-              <div class="mini-item">
+              <div class="detail-fact">
                 <span class="admin-meta">存储标记</span>
                 <strong>{{ detail.storageProvider }}</strong>
               </div>
             </div>
-            <div class="detail-actions">
+            <div class="detail-panel-actions">
               <el-button
                 :disabled="!detail.downloadAvailable"
                 :icon="Download"
@@ -820,15 +854,16 @@ function inferContractName(fileName: string) {
                 下载合同文件
               </el-button>
             </div>
-          </div>
+          </section>
 
-          <el-alert
-            v-if="!detail.downloadAvailable"
-            :closable="false"
-            show-icon
-            title="当前仅迁入了合同元数据，源文件路径仍指向旧服务器或历史目录。"
-            type="warning"
-          />
+          <div v-if="!detail.downloadAvailable" class="detail-note-strip">
+            <el-alert
+              :closable="false"
+              show-icon
+              title="当前仅迁入了合同元数据，源文件路径仍指向旧服务器或历史目录。"
+              type="warning"
+            />
+          </div>
         </div>
       </template>
 

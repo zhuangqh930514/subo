@@ -543,6 +543,7 @@ function toBoolean(value: BooleanFilter) {
 
     <el-dialog
       v-model="detailDialogVisible"
+      class="detail-modal"
       :title="detail ? detail.name : '客户详情'"
       width="960px"
     >
@@ -560,108 +561,143 @@ function toBoolean(value: BooleanFilter) {
       </div>
 
       <template v-else-if="detail">
-        <div class="detail-stack">
-          <div class="mini-metrics">
-            <article class="mini-metric">
+        <div class="detail-shell">
+          <section class="detail-hero">
+            <div class="detail-hero__copy">
+              <span class="detail-hero__label">客户档案</span>
+              <h3>{{ detail.name }}</h3>
+              <p class="detail-hero__summary">
+                {{ detail.customerTypeLabel }}客户 / 来源 {{ detail.source || '未标记' }} / 行业 {{ detail.industry || '未填写' }}
+              </p>
+            </div>
+            <div class="detail-hero__aside">
+              <div class="detail-hero__meta">
+                <el-tag :type="customerTypeTag(detail.customerType)" effect="plain" round>
+                  {{ detail.customerTypeLabel }}
+                </el-tag>
+              </div>
+              <span class="detail-hero__note">
+                地址 {{ detail.address || '暂未补充' }}
+              </span>
+            </div>
+          </section>
+
+          <div class="detail-metric-grid">
+            <article class="detail-metric-card">
               <span>订单数</span>
               <strong>{{ detail.stats.orderCount }}</strong>
             </article>
-            <article class="mini-metric">
+            <article class="detail-metric-card">
               <span>抬头数</span>
               <strong>{{ detail.stats.invoiceProfileCount }}</strong>
             </article>
-            <article class="mini-metric">
+            <article class="detail-metric-card">
               <span>询价数</span>
               <strong>{{ detail.stats.quoteRequestCount }}</strong>
             </article>
-            <article class="mini-metric">
+            <article class="detail-metric-card">
               <span>累计金额</span>
               <strong>{{ detail.stats.totalOrderAmountLabel }}</strong>
             </article>
           </div>
 
-          <div class="detail-block">
-            <div class="detail-block__head">
-              <strong>客户概况</strong>
+          <section class="detail-section-card">
+            <div class="detail-section-card__head">
+              <div>
+                <strong>客户概况</strong>
+                <p>用于快速判断客户画像、来源背景和内部跟进备注。</p>
+              </div>
               <el-tag :type="customerTypeTag(detail.customerType)" effect="plain" round>
                 {{ detail.customerTypeLabel }}
               </el-tag>
             </div>
-            <div class="mini-list">
-              <div class="mini-item">
+            <div class="detail-fact-grid">
+              <div class="detail-fact">
                 <span class="admin-meta">来源</span>
                 <strong>{{ detail.source || '-' }}</strong>
               </div>
-              <div class="mini-item">
+              <div class="detail-fact">
                 <span class="admin-meta">行业</span>
                 <strong>{{ detail.industry || '-' }}</strong>
               </div>
-              <div class="mini-item">
+              <div class="detail-fact">
                 <span class="admin-meta">地址</span>
                 <strong>{{ detail.address || '-' }}</strong>
               </div>
-              <div class="mini-item">
+              <div class="detail-fact">
                 <span class="admin-meta">备注</span>
                 <strong>{{ detail.remark || '-' }}</strong>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div class="detail-block">
-            <div class="detail-block__head">
-              <strong>开票资料</strong>
+          <section class="detail-section-card">
+            <div class="detail-section-card__head">
+              <div>
+                <strong>开票资料</strong>
+                <p>关联到这个客户的全部抬头卡片，含默认标记与订单金额汇总。</p>
+              </div>
               <span class="admin-meta">{{ detail.invoiceProfiles.length }} 条</span>
             </div>
-            <div v-if="detail.invoiceProfiles.length" class="detail-list">
+            <div v-if="detail.invoiceProfiles.length" class="detail-record-grid">
               <article
                 v-for="item in detail.invoiceProfiles"
                 :key="item.id"
-                class="detail-item"
+                class="detail-record-card"
               >
-                <div class="detail-item__head">
-                  <strong>{{ item.companyName }}</strong>
+                <div class="detail-record-card__head">
+                  <div>
+                    <strong>{{ item.companyName }}</strong>
+                    <p class="detail-record-card__meta">{{ item.taxNumber || '税号未填写' }}</p>
+                  </div>
                   <el-tag :type="item.isDefault ? 'success' : 'info'" effect="plain" round>
                     {{ item.isDefault ? '默认' : '备用' }}
                   </el-tag>
                 </div>
-                <div class="detail-meta">{{ item.taxNumber || '-' }}</div>
-                <div class="detail-meta">{{ item.bankName || '未填写开户行' }}</div>
-                <div class="detail-meta">
-                  关联订单 {{ item.linkedOrderCount }} 笔 · {{ item.linkedOrderAmountLabel }}
-                </div>
+                <p class="detail-record-card__meta">{{ item.bankName || '未填写开户行' }}</p>
+                <p class="detail-record-card__meta">
+                  关联订单 {{ item.linkedOrderCount }} 笔 / {{ item.linkedOrderAmountLabel }}
+                </p>
               </article>
             </div>
             <el-empty v-else description="暂无开票资料" :image-size="72" />
-          </div>
+          </section>
 
-          <div class="detail-block">
-            <div class="detail-block__head">
-              <strong>订单记录</strong>
+          <section class="detail-section-card">
+            <div class="detail-section-card__head">
+              <div>
+                <strong>订单记录</strong>
+                <p>展示和这个客户相关的订单、回款状态以及迁移校验提示。</p>
+              </div>
               <span class="admin-meta">{{ detail.orders.length }} 笔</span>
             </div>
-            <div v-if="detail.orders.length" class="detail-list">
+            <div v-if="detail.orders.length" class="detail-record-grid">
               <article
                 v-for="item in detail.orders"
                 :key="item.id"
-                class="detail-item"
+                class="detail-record-card"
               >
-                <div class="detail-item__head">
-                  <strong>{{ item.orderNo }}</strong>
-                  <el-tag :type="orderTypeTag(item.orderType)" effect="plain" round>
-                    {{ item.orderTypeLabel }}
-                  </el-tag>
+                <div class="detail-record-card__head">
+                  <div>
+                    <strong>{{ item.orderNo }}</strong>
+                    <p class="detail-record-card__meta">{{ item.projectName }}</p>
+                  </div>
+                  <div class="detail-pill-row">
+                    <el-tag :type="orderTypeTag(item.orderType)" effect="plain" round>
+                      {{ item.orderTypeLabel }}
+                    </el-tag>
+                    <el-tag :type="paymentTag(item.isPaid)" effect="plain" round size="small">
+                      {{ item.paymentStatusLabel }}
+                    </el-tag>
+                  </div>
                 </div>
-                <div class="detail-meta">{{ item.projectName }}</div>
-                <div class="detail-meta">
-                  {{ item.amountLabel }} ·
-                  <el-tag :type="paymentTag(item.isPaid)" effect="plain" round size="small">
-                    {{ item.paymentStatusLabel }}
-                  </el-tag>
-                </div>
-                <div class="detail-meta">
-                  {{ item.orderDateLabel }} · 抬头 {{ item.invoiceProfile?.companyName || '未关联' }}
-                </div>
-                <div v-if="item.integrityFlags.length" class="integrity-flags">
+                <p class="detail-record-card__meta">
+                  {{ item.amountLabel }} / 下单于 {{ item.orderDateLabel }}
+                </p>
+                <p class="detail-record-card__meta">
+                  抬头 {{ item.invoiceProfile?.companyName || '未关联' }}
+                </p>
+                <div v-if="item.integrityFlags.length" class="detail-pill-row">
                   <el-tag
                     v-for="flag in item.integrityFlags"
                     :key="flag"
@@ -676,39 +712,44 @@ function toBoolean(value: BooleanFilter) {
               </article>
             </div>
             <el-empty v-else description="暂无订单记录" :image-size="72" />
-          </div>
+          </section>
 
-          <div class="detail-block">
-            <div class="detail-block__head">
-              <strong>询价记录</strong>
+          <section class="detail-section-card">
+            <div class="detail-section-card__head">
+              <div>
+                <strong>询价记录</strong>
+                <p>把技术服务与代采询价线索放在同一层，方便复盘转单路径。</p>
+              </div>
               <span class="admin-meta">{{ detail.quoteRequests.length }} 条</span>
             </div>
-            <div v-if="detail.quoteRequests.length" class="detail-list">
+            <div v-if="detail.quoteRequests.length" class="detail-record-grid">
               <article
                 v-for="item in detail.quoteRequests"
                 :key="item.id"
-                class="detail-item"
+                class="detail-record-card"
               >
-                <div class="detail-item__head">
-                  <strong>{{ item.quoteNo }}</strong>
-                  <el-tag :type="quoteBusinessTag(item.businessType)" effect="plain" round>
-                    {{ item.businessTypeLabel }}
-                  </el-tag>
+                <div class="detail-record-card__head">
+                  <div>
+                    <strong>{{ item.quoteNo }}</strong>
+                    <p class="detail-record-card__meta">{{ item.companyName || item.contactName }}</p>
+                  </div>
+                  <div class="detail-pill-row">
+                    <el-tag :type="quoteBusinessTag(item.businessType)" effect="plain" round>
+                      {{ item.businessTypeLabel }}
+                    </el-tag>
+                    <el-tag :type="quoteStatusTag(item.status)" effect="plain" round size="small">
+                      {{ item.statusLabel }}
+                    </el-tag>
+                  </div>
                 </div>
-                <div class="detail-meta">{{ item.companyName || item.contactName }}</div>
-                <div class="detail-meta">
-                  {{ item.estimatedTotalAmountLabel }} · {{ item.itemSummary }}
-                </div>
-                <div class="detail-item__head">
-                  <span class="detail-meta">{{ item.updatedAtLabel }}</span>
-                  <el-tag :type="quoteStatusTag(item.status)" effect="plain" round size="small">
-                    {{ item.statusLabel }}
-                  </el-tag>
-                </div>
+                <p class="detail-record-card__meta">
+                  {{ item.estimatedTotalAmountLabel }} / {{ item.itemSummary }}
+                </p>
+                <p class="detail-record-card__meta">更新于 {{ item.updatedAtLabel }}</p>
               </article>
             </div>
             <el-empty v-else description="暂无询价记录" :image-size="72" />
-          </div>
+          </section>
         </div>
       </template>
 

@@ -566,73 +566,120 @@ function sourceTagType(sourceKey: QuotePoolRecord['sourceKey']) {
 
     <el-dialog
       v-model="detailDialogVisible"
+      class="detail-modal"
       :title="selectedRecord ? selectedRecord.quoteNo : '询价详情'"
       width="960px"
     >
       <template v-if="selectedRecord">
-        <div class="detail-block">
-          <div class="detail-head">
-            <strong>{{ selectedRecord.customer }}</strong>
-            <el-tag :type="statusTagType(selectedRecord.statusKey)" effect="plain" round>
-              {{ selectedRecord.status }}
-            </el-tag>
-          </div>
-          <p class="detail-meta">{{ selectedRecord.contactName }} · {{ selectedRecord.contactChannel }}</p>
-          <p class="detail-meta">{{ selectedRecord.quoteNo }} · {{ selectedRecord.updatedAtLabel }}</p>
-          <div v-if="selectedRecord.linkedOrder" class="linked-order">
-            <span class="panel-meta">已关联订单</span>
-            <strong>{{ selectedRecord.linkedOrder.orderNo }}</strong>
-          </div>
-        </div>
-
-        <div class="detail-block">
-          <h4>询价摘要</h4>
-          <div class="detail-kv">
-            <span>业务类型</span>
-            <strong>{{ selectedRecord.businessType }}</strong>
-          </div>
-          <div class="detail-kv">
-            <span>来源</span>
-            <strong>{{ selectedRecord.source }}</strong>
-          </div>
-          <div class="detail-kv">
-            <span>负责人</span>
-            <strong>{{ selectedRecord.owner }}</strong>
-          </div>
-          <div class="detail-kv">
-            <span>预估金额</span>
-            <strong>{{ selectedRecord.amountLabel }}</strong>
-          </div>
-        </div>
-
-        <div class="detail-block">
-          <h4>备注</h4>
-          <p class="detail-copy">{{ selectedRecord.remark || '暂无备注' }}</p>
-        </div>
-
-        <div class="detail-block">
-          <div class="detail-head">
-            <h4>条目明细</h4>
-            <span class="detail-meta">{{ selectedRecord.itemCount }} 项</span>
-          </div>
-
-          <div
-            v-if="selectedRecord.items.length > 0"
-            class="item-list"
-          >
-            <article
-              v-for="item in selectedRecord.items"
-              :key="`${selectedRecord.id}-${item.itemName}-${item.itemCode ?? item.specification ?? item.quantity}`"
-              class="item-card"
-            >
-              <div>
-                <strong>{{ item.itemName }}</strong>
-                <p>{{ item.itemCode || '无货号' }} · {{ item.specification || '未填写规格' }}</p>
+        <div class="detail-shell">
+          <section class="detail-hero">
+            <div class="detail-hero__copy">
+              <span class="detail-hero__label">询价档案</span>
+              <h3>{{ selectedRecord.quoteNo }}</h3>
+              <p class="detail-hero__summary">
+                {{ selectedRecord.customer }} / 联系人 {{ selectedRecord.contactName }} / 更新于 {{ selectedRecord.updatedAtLabel }}
+              </p>
+            </div>
+            <div class="detail-hero__aside">
+              <div class="detail-hero__meta">
+                <el-tag :type="statusTagType(selectedRecord.statusKey)" effect="plain" round>
+                  {{ selectedRecord.status }}
+                </el-tag>
               </div>
-              <span>{{ item.subtotalLabel }}</span>
+              <span class="detail-hero__note">
+                {{ selectedRecord.linkedOrder ? `已转订单 ${selectedRecord.linkedOrder.orderNo}` : '当前还未转成订单' }}
+              </span>
+            </div>
+          </section>
+
+          <div class="detail-metric-grid">
+            <article class="detail-metric-card">
+              <span>业务类型</span>
+              <strong>{{ selectedRecord.businessType }}</strong>
+            </article>
+            <article class="detail-metric-card">
+              <span>预估金额</span>
+              <strong>{{ selectedRecord.amountLabel }}</strong>
+            </article>
+            <article class="detail-metric-card">
+              <span>条目数</span>
+              <strong>{{ selectedRecord.itemCount }}</strong>
+            </article>
+            <article class="detail-metric-card">
+              <span>负责人</span>
+              <strong>{{ selectedRecord.owner }}</strong>
             </article>
           </div>
-          <el-empty v-else description="当前记录没有条目明细。" />
+
+          <section class="detail-section-card">
+            <div class="detail-section-card__head">
+              <div>
+                <strong>询价摘要</strong>
+                <p>收口线索来源、业务类型、负责人和当前预算区间。</p>
+              </div>
+              <span class="admin-meta">{{ selectedRecord.contactChannel }}</span>
+            </div>
+            <div class="detail-fact-grid">
+              <div class="detail-fact">
+                <span>业务类型</span>
+                <strong>{{ selectedRecord.businessType }}</strong>
+              </div>
+              <div class="detail-fact">
+                <span>来源</span>
+                <strong>{{ selectedRecord.source }}</strong>
+              </div>
+              <div class="detail-fact">
+                <span>负责人</span>
+                <strong>{{ selectedRecord.owner }}</strong>
+              </div>
+              <div class="detail-fact">
+                <span>预估金额</span>
+                <strong>{{ selectedRecord.amountLabel }}</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="detail-section-card">
+            <div class="detail-section-card__head">
+              <div>
+                <strong>备注</strong>
+                <p>保留商务沟通补充信息和交付侧需要注意的说明。</p>
+              </div>
+            </div>
+            <div class="detail-copy-card">{{ selectedRecord.remark || '暂无备注' }}</div>
+          </section>
+
+          <section class="detail-section-card">
+            <div class="detail-section-card__head">
+              <div>
+                <strong>条目明细</strong>
+                <p>逐项查看名称、货号规格和当前小计金额。</p>
+              </div>
+              <span class="admin-meta">{{ selectedRecord.itemCount }} 项</span>
+            </div>
+
+            <div
+              v-if="selectedRecord.items.length > 0"
+              class="detail-record-grid"
+            >
+              <article
+                v-for="item in selectedRecord.items"
+                :key="`${selectedRecord.id}-${item.itemName}-${item.itemCode ?? item.specification ?? item.quantity}`"
+                class="detail-record-card"
+              >
+                <div class="detail-record-card__head">
+                  <div>
+                    <strong>{{ item.itemName }}</strong>
+                    <p class="detail-record-card__meta">
+                      {{ item.itemCode || '无货号' }} / {{ item.specification || '未填写规格' }}
+                    </p>
+                  </div>
+                  <strong>{{ item.subtotalLabel }}</strong>
+                </div>
+              </article>
+            </div>
+            <el-empty v-else description="当前记录没有条目明细。" />
+          </section>
         </div>
       </template>
 

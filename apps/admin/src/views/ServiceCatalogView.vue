@@ -680,73 +680,118 @@ function rowClassName(payload: { row: ServiceCatalogItemRecord }) {
 
     <el-dialog
       v-model="detailDialogVisible"
+      class="detail-modal"
       :title="selectedItem ? selectedItem.name : '条目详情'"
       width="920px"
     >
       <template v-if="selectedItem">
-        <div class="detail-top">
-          <div>
-            <strong class="detail-title">{{ selectedItem.name }}</strong>
-            <p>{{ selectedItem.displayCode }} · {{ selectedItem.projectName }}</p>
+        <div class="detail-shell">
+          <section class="detail-hero">
+            <div class="detail-hero__copy">
+              <span class="detail-hero__label">服务条目</span>
+              <h3>{{ selectedItem.name }}</h3>
+              <p class="detail-hero__summary">
+                展示编码 {{ selectedItem.displayCode }} / 项目 {{ selectedItem.projectName }}
+              </p>
+            </div>
+
+            <div class="detail-hero__aside">
+              <div class="detail-hero__meta">
+                <el-tag
+                  effect="plain"
+                  round
+                  type="primary"
+                >
+                  {{ selectedItem.categoryName }}
+                </el-tag>
+                <el-tag
+                  :type="getStatusTagType(selectedItem.status)"
+                  effect="plain"
+                  round
+                >
+                  {{ getStatusLabel(selectedItem.status) }}
+                </el-tag>
+              </div>
+              <span class="detail-hero__note">
+                更新于 {{ formatUpdatedAt(selectedItem.updatedAt) }}
+              </span>
+            </div>
+          </section>
+
+          <div class="detail-metric-grid">
+            <article class="detail-metric-card">
+              <span>当前单价</span>
+              <strong>{{ formatCurrency(selectedItem.unitPrice) }}</strong>
+            </article>
+            <article class="detail-metric-card">
+              <span>目录分类</span>
+              <strong>{{ selectedItem.categoryName }}</strong>
+            </article>
+            <article class="detail-metric-card">
+              <span>状态</span>
+              <strong>{{ getStatusLabel(selectedItem.status) }}</strong>
+            </article>
+            <article class="detail-metric-card">
+              <span>目录来源</span>
+              <strong>{{ selectedItem.sourceVersion || '未标记' }}</strong>
+            </article>
           </div>
 
-          <div class="detail-tags">
-            <el-tag
-              effect="plain"
-              round
-              type="primary"
-            >
-              {{ selectedItem.categoryName }}
-            </el-tag>
-            <el-tag
-              :type="getStatusTagType(selectedItem.status)"
-              effect="plain"
-              round
-            >
-              {{ getStatusLabel(selectedItem.status) }}
-            </el-tag>
-          </div>
-        </div>
+          <section class="detail-section-card">
+            <div class="detail-section-card__head">
+              <div>
+                <strong>价格说明</strong>
+                <p>这里保留商务注释，方便报价口径和展示内容保持一致。</p>
+              </div>
+            </div>
+            <div class="detail-copy-card">
+              {{ selectedItem.priceNote || '当前没有价格备注，可在编辑面板中补充商务说明。' }}
+            </div>
+          </section>
 
-        <div class="price-block">
-          <span>当前单价</span>
-          <strong>{{ formatCurrency(selectedItem.unitPrice) }}</strong>
-          <p>{{ selectedItem.priceNote || '当前没有价格备注，可在编辑面板中补充商务说明。' }}</p>
-        </div>
+          <section class="detail-section-card">
+            <div class="detail-section-card__head">
+              <div>
+                <strong>条目字段</strong>
+                <p>把展示编码、内部编码、规格与来源信息做成清晰的档案字段卡。</p>
+              </div>
+            </div>
 
-        <div class="detail-grid">
-          <div class="detail-row">
-            <span>展示编码</span>
-            <strong>{{ selectedItem.displayCode }}</strong>
-          </div>
-          <div class="detail-row">
-            <span>内部编码</span>
-            <strong>{{ selectedItem.code }}</strong>
-          </div>
-          <div class="detail-row">
-            <span>分类</span>
-            <strong>{{ selectedItem.categoryName }}</strong>
-          </div>
-          <div class="detail-row">
-            <span>项目</span>
-            <strong>{{ selectedItem.projectName }}</strong>
-          </div>
-          <div class="detail-row">
-            <span>规格</span>
-            <strong>{{ selectedItem.specification || '未填写' }}</strong>
-          </div>
-          <div class="detail-row">
-            <span>目录来源</span>
-            <strong>{{ selectedItem.sourceVersion || '未标记来源' }}</strong>
-          </div>
-          <div class="detail-row">
-            <span>更新时间</span>
-            <strong>{{ formatUpdatedAt(selectedItem.updatedAt) }}</strong>
-          </div>
-          <div class="detail-row">
-            <span>状态</span>
-            <strong>{{ getStatusLabel(selectedItem.status) }}</strong>
-          </div>
+            <div class="detail-fact-grid">
+              <div class="detail-fact">
+                <span>展示编码</span>
+                <strong>{{ selectedItem.displayCode }}</strong>
+              </div>
+              <div class="detail-fact">
+                <span>内部编码</span>
+                <strong>{{ selectedItem.code }}</strong>
+              </div>
+              <div class="detail-fact">
+                <span>分类</span>
+                <strong>{{ selectedItem.categoryName }}</strong>
+              </div>
+              <div class="detail-fact">
+                <span>项目</span>
+                <strong>{{ selectedItem.projectName }}</strong>
+              </div>
+              <div class="detail-fact">
+                <span>规格</span>
+                <strong>{{ selectedItem.specification || '未填写' }}</strong>
+              </div>
+              <div class="detail-fact">
+                <span>目录来源</span>
+                <strong>{{ selectedItem.sourceVersion || '未标记来源' }}</strong>
+              </div>
+              <div class="detail-fact">
+                <span>更新时间</span>
+                <strong>{{ formatUpdatedAt(selectedItem.updatedAt) }}</strong>
+              </div>
+              <div class="detail-fact">
+                <span>状态</span>
+                <strong>{{ getStatusLabel(selectedItem.status) }}</strong>
+              </div>
+            </div>
+          </section>
         </div>
       </template>
 
