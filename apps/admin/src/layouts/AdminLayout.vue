@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watchEffect } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import {
   ArrowRightBold,
@@ -33,6 +33,15 @@ type NavGroup = {
 const route = useRoute()
 const router = useRouter()
 const auth = useAdminAuth()
+const adminAppRef = ref<HTMLElement | null>(null)
+const sidebarWidth = ref(360)
+const isResizingSidebar = ref(false)
+
+const SIDEBAR_WIDTH_KEY = 'subo-admin-sidebar-width'
+const SIDEBAR_MIN_WIDTH = 280
+const SIDEBAR_MAX_WIDTH = 520
+const SIDEBAR_KEYBOARD_STEP = 20
+const SIDEBAR_RESIZER_OFFSET = 9
 
 const navigation = computed<NavGroup[]>(() =>
   [
@@ -75,6 +84,10 @@ const routeMeta = computed(() => {
     subtitle: meta.subtitle ?? '以本地 mock 先把后台结构和关键动作落稳。',
   }
 })
+
+const adminAppStyle = computed(() => ({
+  '--sidebar-width': `${sidebarWidth.value}px`,
+}))
 
 const visibleNavItems = computed(() => navigation.value.flatMap((group) => group.items))
 
@@ -125,13 +138,135 @@ watchEffect(() => {
   document.title = `溯博后台 · ${routeMeta.value.title}`
 })
 
+function clampSidebarWidth(width: number) {
+  return Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, Math.round(width)))
+}
+
+function persistSidebarWidth(width: number) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.setItem(SIDEBAR_WIDTH_KEY, String(width))
+}
+
+function setSidebarWidth(width: number) {
+  const nextWidth = clampSidebarWidth(width)
+
+  sidebarWidth.value = nextWidth
+  persistSidebarWidth(nextWidth)
+}
+
+function getSidebarWidthFromPointer(clientX: number) {
+  const layout = adminAppRef.value
+
+  if (!layout) {
+    return sidebarWidth.value
+  }
+
+  const rect = layout.getBoundingClientRect()
+  const styles = window.getComputedStyle(layout)
+  const paddingLeft = Number.parseFloat(styles.paddingLeft || '0')
+
+  return clientX - rect.left - paddingLeft - SIDEBAR_RESIZER_OFFSET
+}
+
+function handleSidebarResize(event: PointerEvent) {
+  if (!isResizingSidebar.value || window.innerWidth <= 1180) {
+    return
+  }
+
+  setSidebarWidth(getSidebarWidthFromPointer(event.clientX))
+}
+
+function stopSidebarResize() {
+  if (!isResizingSidebar.value) {
+    return
+  }
+
+  isResizingSidebar.value = false
+  document.body.style.removeProperty('user-select')
+  document.body.style.removeProperty('cursor')
+}
+
+function startSidebarResize(event: PointerEvent) {
+  if (event.button !== 0 || window.innerWidth <= 1180) {
+    return
+  }
+
+  event.preventDefault()
+  isResizingSidebar.value = true
+  document.body.style.userSelect = 'none'
+  document.body.style.cursor = 'col-resize'
+  handleSidebarResize(event)
+}
+
+function handleResizerKeydown(event: KeyboardEvent) {
+  if (window.innerWidth <= 1180) {
+    return
+  }
+
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault()
+    setSidebarWidth(sidebarWidth.value - SIDEBAR_KEYBOARD_STEP)
+  }
+
+  if (event.key === 'ArrowRight') {
+    event.preventDefault()
+    setSidebarWidth(sidebarWidth.value + SIDEBAR_KEYBOARD_STEP)
+  }
+
+  if (event.key === 'Home') {
+    event.preventDefault()
+    setSidebarWidth(SIDEBAR_MIN_WIDTH)
+  }
+
+  if (event.key === 'End') {
+    event.preventDefault()
+    setSidebarWidth(SIDEBAR_MAX_WIDTH)
+  }
+}
+
+function handleViewportResize() {
+  if (window.innerWidth <= 1180) {
+    stopSidebarResize()
+  }
+}
+
+onMounted(() => {
+  const storedWidth = Number(window.localStorage.getItem(SIDEBAR_WIDTH_KEY))
+
+  if (Number.isFinite(storedWidth) && storedWidth > 0) {
+    sidebarWidth.value = clampSidebarWidth(storedWidth)
+  }
+
+  window.addEventListener('pointermove', handleSidebarResize)
+  window.addEventListener('pointerup', stopSidebarResize)
+  window.addEventListener('pointercancel', stopSidebarResize)
+  window.addEventListener('blur', stopSidebarResize)
+  window.addEventListener('resize', handleViewportResize)
+})
+
+onBeforeUnmount(() => {
+  stopSidebarResize()
+  window.removeEventListener('pointermove', handleSidebarResize)
+  window.removeEventListener('pointerup', stopSidebarResize)
+  window.removeEventListener('pointercancel', stopSidebarResize)
+  window.removeEventListener('blur', stopSidebarResize)
+  window.removeEventListener('resize', handleViewportResize)
+})
+
 async function handleLogout() {
   await logoutAdmin('/login')
 }
 </script>
 
 <template>
-  <div class="admin-app">
+  <div
+    ref="adminAppRef"
+    :class="['admin-app', { 'is-resizing-sidebar': isResizingSidebar }]"
+    :style="adminAppStyle"
+  >
     <aside class="admin-sidebar">
       <div class="brand-block">
         <img
@@ -191,6 +326,17 @@ async function handleLogout() {
 
     </aside>
 
+    <button
+      aria-label="拖拽调整侧边栏宽度"
+      class="sidebar-resizer"
+      type="button"
+      @keydown="handleResizerKeydown"
+      @pointerdown="startSidebarResize"
+    >
+      <span class="sidebar-resizer__line" />
+      <span class="sidebar-resizer__thumb" />
+    </button>
+
     <div class="admin-frame">
       <header class="topbar">
         <div class="page-copy">
@@ -239,11 +385,16 @@ async function handleLogout() {
 
 <style scoped>
 .admin-app {
+  --sidebar-width: 360px;
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
-  gap: 24px;
+  grid-template-columns: var(--sidebar-width) 18px minmax(0, 1fr);
+  gap: 6px;
   min-height: 100vh;
   padding: 24px;
+}
+
+.admin-app.is-resizing-sidebar {
+  cursor: col-resize;
 }
 
 .admin-sidebar {
@@ -253,13 +404,81 @@ async function handleLogout() {
   align-content: start;
   gap: 24px;
   height: calc(100vh - 48px);
-  padding: 24px 20px;
+  padding: 28px 24px;
   border: 1px solid var(--app-border-strong);
   border-radius: 8px;
   background:
     linear-gradient(180deg, rgba(15, 23, 42, 0.025), rgba(15, 23, 42, 0.01)),
     #ffffff;
   box-shadow: var(--app-shadow-lg);
+}
+
+.sidebar-resizer {
+  position: sticky;
+  top: 24px;
+  display: grid;
+  place-items: center;
+  align-self: start;
+  height: calc(100vh - 48px);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.sidebar-resizer:focus-visible {
+  outline: none;
+}
+
+.sidebar-resizer__line,
+.sidebar-resizer__thumb {
+  pointer-events: none;
+}
+
+.sidebar-resizer__line {
+  grid-area: 1 / 1;
+  width: 2px;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(12, 92, 171, 0.08), rgba(12, 92, 171, 0.28), rgba(12, 92, 171, 0.08));
+  transition:
+    transform 0.24s ease,
+    background 0.24s ease;
+}
+
+.sidebar-resizer__thumb {
+  grid-area: 1 / 1;
+  width: 12px;
+  height: 84px;
+  border: 1px solid rgba(12, 92, 171, 0.14);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.98));
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+  transition:
+    transform 0.24s ease,
+    border-color 0.24s ease,
+    box-shadow 0.24s ease;
+}
+
+.sidebar-resizer:hover .sidebar-resizer__line,
+.sidebar-resizer:focus-visible .sidebar-resizer__line,
+.admin-app.is-resizing-sidebar .sidebar-resizer__line {
+  transform: scaleY(1.02);
+  background: linear-gradient(180deg, rgba(12, 92, 171, 0.16), rgba(12, 92, 171, 0.45), rgba(12, 92, 171, 0.16));
+}
+
+.sidebar-resizer:hover .sidebar-resizer__thumb,
+.sidebar-resizer:focus-visible .sidebar-resizer__thumb,
+.admin-app.is-resizing-sidebar .sidebar-resizer__thumb {
+  transform: scale(1.08);
+  border-color: rgba(12, 92, 171, 0.28);
+  box-shadow:
+    0 18px 38px rgba(12, 92, 171, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.82);
 }
 
 .brand-block {
@@ -469,11 +688,16 @@ async function handleLogout() {
 @media (max-width: 1180px) {
   .admin-app {
     grid-template-columns: 1fr;
+    gap: 24px;
   }
 
   .admin-sidebar {
     position: static;
     height: auto;
+  }
+
+  .sidebar-resizer {
+    display: none;
   }
 }
 
