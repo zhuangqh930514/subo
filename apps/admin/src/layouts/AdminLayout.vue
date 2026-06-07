@@ -38,7 +38,7 @@ const sidebarWidth = ref(360)
 const isResizingSidebar = ref(false)
 
 const SIDEBAR_WIDTH_KEY = 'subo-admin-sidebar-width'
-const SIDEBAR_MIN_WIDTH = 280
+const SIDEBAR_MIN_WIDTH = 220
 const SIDEBAR_MAX_WIDTH = 520
 const SIDEBAR_KEYBOARD_STEP = 20
 const SIDEBAR_RESIZER_OFFSET = 9
