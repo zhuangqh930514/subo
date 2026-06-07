@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { Delete, Download, EditPen, Plus, RefreshRight, Search } from '@element-plus/icons-vue'
+import { Delete, Download, EditPen, Plus, RefreshRight, Search, View } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import PanelCard from '../components/PanelCard.vue'
@@ -36,6 +36,7 @@ const overview = ref<ContractsOverviewResponse | null>(null)
 const response = ref<PagedResponse<ContractListRecord> | null>(null)
 const detail = ref<ContractDetailRecord | null>(null)
 const selectedId = ref('')
+const detailDialogVisible = ref(false)
 const uploadFormRef = ref<FormInstance>()
 const editFormRef = ref<FormInstance>()
 const fileInputRef = ref<HTMLInputElement | null>(null)
@@ -178,6 +179,14 @@ function selectRow(row: ContractListRecord) {
   selectedId.value = row.id
 }
 
+function openDetailDialog(row: ContractListRecord) {
+  selectedId.value = row.id
+  if (detail.value?.id === row.id) {
+    void loadDetail(row.id)
+  }
+  detailDialogVisible.value = true
+}
+
 async function handleDownload(record: ContractListRecord | ContractDetailRecord) {
   if (!record.downloadAvailable || downloadLoading.value) {
     return
@@ -212,7 +221,9 @@ async function openUploadDialog() {
   await loadUploadOrders()
 }
 
-async function openEditDialog(row: ContractListRecord) {
+async function openEditDialog(
+  row: Pick<ContractListRecord, 'id' | 'linkedOrder' | 'contractName' | 'description'>,
+) {
   editForm.id = row.id
   editForm.orderId = row.linkedOrder?.id ?? ''
   editForm.contractName = row.contractName
@@ -467,6 +478,7 @@ async function handleDelete(row: ContractListRecord) {
 
     if (selectedId.value === row.id) {
       detail.value = null
+      detailDialogVisible.value = false
     }
 
     await loadPage()
@@ -632,9 +644,12 @@ function inferContractName(fileName: string) {
 
           <el-table-column label="来源" min-width="120" prop="sourceLabel" />
           <el-table-column label="更新时间" min-width="140" prop="updatedAtLabel" />
-          <el-table-column align="right" label="操作" min-width="180">
+          <el-table-column align="right" label="操作" min-width="250">
             <template #default="{ row }">
               <div class="row-actions" @click.stop>
+                <el-button :icon="View" link type="info" @click="openDetailDialog(row)">
+                  详情
+                </el-button>
                 <el-button
                   :icon="EditPen"
                   link
@@ -677,151 +692,160 @@ function inferContractName(fileName: string) {
           />
         </div>
       </PanelCard>
-
-      <PanelCard
-        :description="detail ? '右侧集中查看合同元数据、路径来源和订单关联状态。' : '选择左侧合同查看详情。'"
-        :title="detail ? detail.contractName : '合同详情'"
-      >
-        <el-alert
-          v-if="detailError"
-          class="detail-alert"
-          :closable="false"
-          show-icon
-          :title="detailError"
-          type="error"
-        />
-
-        <div v-if="detailLoading" class="detail-stack">
-          <el-skeleton :rows="10" animated />
-        </div>
-
-        <template v-else-if="detail">
-          <div class="detail-stack">
-            <div class="mini-metrics">
-              <article class="mini-metric">
-                <span>文件大小</span>
-                <strong>{{ detail.fileSizeLabel }}</strong>
-              </article>
-              <article class="mini-metric">
-                <span>版本</span>
-                <strong>v{{ detail.versionNo }}</strong>
-              </article>
-              <article class="mini-metric">
-                <span>订单关联</span>
-                <strong>{{ detail.linkedOrder ? '已关联' : '未关联' }}</strong>
-              </article>
-              <article class="mini-metric">
-                <span>下载状态</span>
-                <strong>{{ detail.downloadAvailable ? '可下载' : '仅元数据' }}</strong>
-              </article>
-            </div>
-
-            <div class="detail-block">
-              <div class="detail-block__head">
-                <strong>合同概况</strong>
-                <el-tag
-                  :type="detail.downloadAvailable ? 'success' : 'warning'"
-                  effect="plain"
-                  round
-                >
-                  {{ detail.sourceLabel }}
-                </el-tag>
-              </div>
-              <div class="mini-list">
-                <div class="mini-item">
-                  <span class="admin-meta">合同名称</span>
-                  <strong>{{ detail.contractName }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">旧系统 ID</span>
-                  <strong>{{ detail.legacyContractId || '-' }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">说明</span>
-                  <strong>{{ detail.description || '-' }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">创建 / 更新</span>
-                  <strong>{{ detail.createdAtLabel }} / {{ detail.updatedAtLabel }}</strong>
-                </div>
-              </div>
-            </div>
-
-            <div class="detail-block">
-              <div class="detail-block__head">
-                <strong>关联关系</strong>
-                <span class="admin-meta">{{ detail.linkedOrder ? '已挂单' : '待补链' }}</span>
-              </div>
-              <div class="mini-list">
-                <div class="mini-item">
-                  <span class="admin-meta">关联订单</span>
-                  <strong>{{ detail.linkedOrder?.orderNo || '-' }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">订单项目</span>
-                  <strong>{{ detail.linkedOrder?.projectName || '-' }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">关联客户</span>
-                  <strong>{{ detail.linkedCustomer?.name || '-' }}</strong>
-                </div>
-              </div>
-            </div>
-
-            <div class="detail-block">
-              <div class="detail-block__head">
-                <strong>文件档案</strong>
-                <span class="admin-meta">{{ detail.fileName }}</span>
-              </div>
-              <div class="mini-list">
-                <div class="mini-item">
-                  <span class="admin-meta">文件名</span>
-                  <strong>{{ detail.fileName }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">文件类型</span>
-                  <strong>{{ detail.fileType.toUpperCase() }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">来源路径</span>
-                  <strong>{{ detail.filePath || '-' }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">存储标记</span>
-                  <strong>{{ detail.storageProvider }}</strong>
-                </div>
-              </div>
-              <div class="detail-actions">
-                <el-button
-                  :disabled="!detail.downloadAvailable"
-                  :icon="Download"
-                  :loading="downloadLoading"
-                  size="large"
-                  type="primary"
-                  @click="handleDownload(detail)"
-                >
-                  下载合同文件
-                </el-button>
-              </div>
-            </div>
-
-            <el-alert
-              v-if="!detail.downloadAvailable"
-              :closable="false"
-              show-icon
-              title="当前仅迁入了合同元数据，源文件路径仍指向旧服务器或历史目录。"
-              type="warning"
-            />
-          </div>
-        </template>
-
-        <el-empty
-          v-else
-          description="请先从左侧选择一个合同"
-          :image-size="80"
-        />
-      </PanelCard>
     </section>
+
+    <el-dialog
+      v-model="detailDialogVisible"
+      :title="detail ? detail.contractName : '合同详情'"
+      width="960px"
+    >
+      <el-alert
+        v-if="detailError"
+        class="detail-alert"
+        :closable="false"
+        show-icon
+        :title="detailError"
+        type="error"
+      />
+
+      <div v-if="detailLoading" class="detail-stack">
+        <el-skeleton :rows="10" animated />
+      </div>
+
+      <template v-else-if="detail">
+        <div class="detail-stack">
+          <div class="mini-metrics">
+            <article class="mini-metric">
+              <span>文件大小</span>
+              <strong>{{ detail.fileSizeLabel }}</strong>
+            </article>
+            <article class="mini-metric">
+              <span>版本</span>
+              <strong>v{{ detail.versionNo }}</strong>
+            </article>
+            <article class="mini-metric">
+              <span>订单关联</span>
+              <strong>{{ detail.linkedOrder ? '已关联' : '未关联' }}</strong>
+            </article>
+            <article class="mini-metric">
+              <span>下载状态</span>
+              <strong>{{ detail.downloadAvailable ? '可下载' : '仅元数据' }}</strong>
+            </article>
+          </div>
+
+          <div class="detail-block">
+            <div class="detail-block__head">
+              <strong>合同概况</strong>
+              <el-tag
+                :type="detail.downloadAvailable ? 'success' : 'warning'"
+                effect="plain"
+                round
+              >
+                {{ detail.sourceLabel }}
+              </el-tag>
+            </div>
+            <div class="mini-list">
+              <div class="mini-item">
+                <span class="admin-meta">合同名称</span>
+                <strong>{{ detail.contractName }}</strong>
+              </div>
+              <div class="mini-item">
+                <span class="admin-meta">旧系统 ID</span>
+                <strong>{{ detail.legacyContractId || '-' }}</strong>
+              </div>
+              <div class="mini-item">
+                <span class="admin-meta">说明</span>
+                <strong>{{ detail.description || '-' }}</strong>
+              </div>
+              <div class="mini-item">
+                <span class="admin-meta">创建 / 更新</span>
+                <strong>{{ detail.createdAtLabel }} / {{ detail.updatedAtLabel }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-block">
+            <div class="detail-block__head">
+              <strong>关联关系</strong>
+              <span class="admin-meta">{{ detail.linkedOrder ? '已挂单' : '待补链' }}</span>
+            </div>
+            <div class="mini-list">
+              <div class="mini-item">
+                <span class="admin-meta">关联订单</span>
+                <strong>{{ detail.linkedOrder?.orderNo || '-' }}</strong>
+              </div>
+              <div class="mini-item">
+                <span class="admin-meta">订单项目</span>
+                <strong>{{ detail.linkedOrder?.projectName || '-' }}</strong>
+              </div>
+              <div class="mini-item">
+                <span class="admin-meta">关联客户</span>
+                <strong>{{ detail.linkedCustomer?.name || '-' }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-block">
+            <div class="detail-block__head">
+              <strong>文件档案</strong>
+              <span class="admin-meta">{{ detail.fileName }}</span>
+            </div>
+            <div class="mini-list">
+              <div class="mini-item">
+                <span class="admin-meta">文件名</span>
+                <strong>{{ detail.fileName }}</strong>
+              </div>
+              <div class="mini-item">
+                <span class="admin-meta">文件类型</span>
+                <strong>{{ detail.fileType.toUpperCase() }}</strong>
+              </div>
+              <div class="mini-item">
+                <span class="admin-meta">来源路径</span>
+                <strong>{{ detail.filePath || '-' }}</strong>
+              </div>
+              <div class="mini-item">
+                <span class="admin-meta">存储标记</span>
+                <strong>{{ detail.storageProvider }}</strong>
+              </div>
+            </div>
+            <div class="detail-actions">
+              <el-button
+                :disabled="!detail.downloadAvailable"
+                :icon="Download"
+                :loading="downloadLoading"
+                size="large"
+                type="primary"
+                @click="handleDownload(detail)"
+              >
+                下载合同文件
+              </el-button>
+            </div>
+          </div>
+
+          <el-alert
+            v-if="!detail.downloadAvailable"
+            :closable="false"
+            show-icon
+            title="当前仅迁入了合同元数据，源文件路径仍指向旧服务器或历史目录。"
+            type="warning"
+          />
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="detailDialogVisible = false">关闭</el-button>
+          <el-button
+            :icon="EditPen"
+            :disabled="!detail"
+            type="primary"
+            @click="detail && openEditDialog(detail)"
+          >
+            编辑
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
 
     <el-dialog
       v-model="editDialogVisible"
@@ -1051,7 +1075,7 @@ function inferContractName(fileName: string) {
 
 .contracts-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.9fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
   align-items: start;
 }

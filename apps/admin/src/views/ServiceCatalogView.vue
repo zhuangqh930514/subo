@@ -8,7 +8,7 @@ import {
   type FormRules,
   type TableInstance,
 } from 'element-plus'
-import { Download, EditPen, FolderOpened, RefreshRight, Search } from '@element-plus/icons-vue'
+import { Delete, Download, EditPen, FolderOpened, RefreshRight, Search, View } from '@element-plus/icons-vue'
 import PanelCard from '../components/PanelCard.vue'
 import {
   bulkUpdateServiceCatalogStatus,
@@ -38,6 +38,7 @@ const errorMessage = ref('')
 const overview = ref<ServiceCatalogOverviewResponse | null>(null)
 const selectedId = ref('')
 const selectedRows = ref<ServiceCatalogItemRecord[]>([])
+const detailDialogVisible = ref(false)
 const editDialogVisible = ref(false)
 const reimportDialogVisible = ref(false)
 const editFormRef = ref<FormInstance>()
@@ -195,6 +196,15 @@ function selectRow(row: ServiceCatalogItemRecord) {
   selectedId.value = row.id
 }
 
+function openDetailDialog(item: ServiceCatalogItemRecord | null = selectedItem.value) {
+  if (!item) {
+    return
+  }
+
+  selectedId.value = item.id
+  detailDialogVisible.value = true
+}
+
 function openEditDialog(item: ServiceCatalogItemRecord | null = selectedItem.value) {
   if (!item) {
     return
@@ -212,6 +222,10 @@ function openEditDialog(item: ServiceCatalogItemRecord | null = selectedItem.val
   editForm.priceNote = item.priceNote
   editForm.status = item.status
   editDialogVisible.value = true
+}
+
+function handleDeleteUnavailable() {
+  ElMessage.warning('服务目录当前仅支持停用或归档，暂无删除接口。')
 }
 
 async function saveEdit() {
@@ -629,111 +643,129 @@ function rowClassName(payload: { row: ServiceCatalogItemRecord }) {
 
           <el-table-column
             label="操作"
-            min-width="100"
+            min-width="220"
           >
             <template #default="{ row }">
-              <el-button
-                :icon="EditPen"
-                link
-                type="primary"
-                @click.stop="openEditDialog(row)"
-              >
-                编辑
-              </el-button>
+              <div class="row-actions" @click.stop>
+                <el-button
+                  :icon="View"
+                  link
+                  type="info"
+                  @click.stop="openDetailDialog(row)"
+                >
+                  详情
+                </el-button>
+                <el-button
+                  :icon="EditPen"
+                  link
+                  type="primary"
+                  @click.stop="openEditDialog(row)"
+                >
+                  编辑
+                </el-button>
+                <el-button
+                  :icon="Delete"
+                  link
+                  type="danger"
+                  @click.stop="handleDeleteUnavailable"
+                >
+                  删除
+                </el-button>
+              </div>
             </template>
           </el-table-column>
         </el-table>
       </PanelCard>
-
-      <PanelCard
-        class="catalog-detail-panel"
-        description="右侧聚焦单个条目，便于核对分类归属、价格和目录来源。"
-        title="条目详情"
-      >
-        <template v-if="selectedItem">
-          <div class="detail-top">
-            <div>
-              <strong class="detail-title">{{ selectedItem.name }}</strong>
-              <p>{{ selectedItem.displayCode }} · {{ selectedItem.projectName }}</p>
-            </div>
-
-            <div class="detail-tags">
-              <el-tag
-                effect="plain"
-                round
-                type="primary"
-              >
-                {{ selectedItem.categoryName }}
-              </el-tag>
-              <el-tag
-                :type="getStatusTagType(selectedItem.status)"
-                effect="plain"
-                round
-              >
-                {{ getStatusLabel(selectedItem.status) }}
-              </el-tag>
-            </div>
-          </div>
-
-          <div class="price-block">
-            <span>当前单价</span>
-            <strong>{{ formatCurrency(selectedItem.unitPrice) }}</strong>
-            <p>{{ selectedItem.priceNote || '当前没有价格备注，可在编辑面板中补充商务说明。' }}</p>
-          </div>
-
-          <div class="detail-grid">
-            <div class="detail-row">
-              <span>展示编码</span>
-              <strong>{{ selectedItem.displayCode }}</strong>
-            </div>
-            <div class="detail-row">
-              <span>内部编码</span>
-              <strong>{{ selectedItem.code }}</strong>
-            </div>
-            <div class="detail-row">
-              <span>分类</span>
-              <strong>{{ selectedItem.categoryName }}</strong>
-            </div>
-            <div class="detail-row">
-              <span>项目</span>
-              <strong>{{ selectedItem.projectName }}</strong>
-            </div>
-            <div class="detail-row">
-              <span>规格</span>
-              <strong>{{ selectedItem.specification || '未填写' }}</strong>
-            </div>
-            <div class="detail-row">
-              <span>目录来源</span>
-              <strong>{{ selectedItem.sourceVersion || '未标记来源' }}</strong>
-            </div>
-            <div class="detail-row">
-              <span>更新时间</span>
-              <strong>{{ formatUpdatedAt(selectedItem.updatedAt) }}</strong>
-            </div>
-            <div class="detail-row">
-              <span>状态</span>
-              <strong>{{ getStatusLabel(selectedItem.status) }}</strong>
-            </div>
-          </div>
-
-          <div class="detail-actions">
-            <el-button
-              :icon="EditPen"
-              size="large"
-              type="primary"
-              @click="openEditDialog()"
-            >
-              编辑当前条目
-            </el-button>
-          </div>
-        </template>
-
-        <el-empty
-          v-else
-          description="先从左侧选择一条目录记录。"
-        />
-      </PanelCard>
     </section>
+
+    <el-dialog
+      v-model="detailDialogVisible"
+      :title="selectedItem ? selectedItem.name : '条目详情'"
+      width="920px"
+    >
+      <template v-if="selectedItem">
+        <div class="detail-top">
+          <div>
+            <strong class="detail-title">{{ selectedItem.name }}</strong>
+            <p>{{ selectedItem.displayCode }} · {{ selectedItem.projectName }}</p>
+          </div>
+
+          <div class="detail-tags">
+            <el-tag
+              effect="plain"
+              round
+              type="primary"
+            >
+              {{ selectedItem.categoryName }}
+            </el-tag>
+            <el-tag
+              :type="getStatusTagType(selectedItem.status)"
+              effect="plain"
+              round
+            >
+              {{ getStatusLabel(selectedItem.status) }}
+            </el-tag>
+          </div>
+        </div>
+
+        <div class="price-block">
+          <span>当前单价</span>
+          <strong>{{ formatCurrency(selectedItem.unitPrice) }}</strong>
+          <p>{{ selectedItem.priceNote || '当前没有价格备注，可在编辑面板中补充商务说明。' }}</p>
+        </div>
+
+        <div class="detail-grid">
+          <div class="detail-row">
+            <span>展示编码</span>
+            <strong>{{ selectedItem.displayCode }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>内部编码</span>
+            <strong>{{ selectedItem.code }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>分类</span>
+            <strong>{{ selectedItem.categoryName }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>项目</span>
+            <strong>{{ selectedItem.projectName }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>规格</span>
+            <strong>{{ selectedItem.specification || '未填写' }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>目录来源</span>
+            <strong>{{ selectedItem.sourceVersion || '未标记来源' }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>更新时间</span>
+            <strong>{{ formatUpdatedAt(selectedItem.updatedAt) }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>状态</span>
+            <strong>{{ getStatusLabel(selectedItem.status) }}</strong>
+          </div>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="detailDialogVisible = false">
+            关闭
+          </el-button>
+          <el-button
+            :icon="EditPen"
+            :disabled="!selectedItem"
+            type="primary"
+            @click="openEditDialog()"
+          >
+            编辑
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
 
     <el-dialog
       v-model="editDialogVisible"
@@ -975,7 +1007,7 @@ function rowClassName(payload: { row: ServiceCatalogItemRecord }) {
 
 .catalog-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(360px, 0.9fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
 }
 
@@ -1004,6 +1036,7 @@ function rowClassName(payload: { row: ServiceCatalogItemRecord }) {
 .toolbar-top,
 .toolbar-filters,
 .toolbar-actions,
+.row-actions,
 .detail-top,
 .detail-actions,
 .dialog-footer {
@@ -1051,6 +1084,10 @@ function rowClassName(payload: { row: ServiceCatalogItemRecord }) {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.row-actions {
+  justify-content: flex-end;
 }
 
 .primary-cell {

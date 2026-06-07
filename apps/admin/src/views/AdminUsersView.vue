@@ -10,6 +10,7 @@ import {
   RefreshRight,
   Search,
   UserFilled,
+  View,
 } from '@element-plus/icons-vue'
 import PanelCard from '../components/PanelCard.vue'
 import {
@@ -35,6 +36,8 @@ const deleteLoadingId = ref('')
 const errorMessage = ref('')
 const overview = ref<IamOverviewResponse | null>(null)
 const userResponse = ref<Awaited<ReturnType<typeof fetchAdminUsers>> | null>(null)
+const detailDialogVisible = ref(false)
+const detailRecord = ref<AdminUserRecord | null>(null)
 
 const filters = reactive({
   search: '',
@@ -68,7 +71,6 @@ const rows = computed(() => userResponse.value?.records ?? [])
 const total = computed(() => userResponse.value?.total ?? 0)
 const demoMode = computed(() => overview.value?.demoMode ?? userResponse.value?.demoMode ?? false)
 const roles = computed(() => overview.value?.roles ?? [])
-const recentLogs = computed(() => overview.value?.recentLogs ?? [])
 
 const formRules: FormRules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
@@ -117,6 +119,7 @@ async function refreshAll() {
 
     overview.value = nextOverview
     userResponse.value = nextUsers
+    syncDetailRecord(nextUsers.records)
   } catch (error) {
     overview.value = null
     userResponse.value = null
@@ -137,6 +140,7 @@ async function loadUsersOnly() {
       page: filters.page,
       pageSize: filters.pageSize,
     })
+    syncDetailRecord(userResponse.value.records)
   } catch (error) {
     userResponse.value = null
     errorMessage.value = error instanceof Error ? error.message : '管理员列表加载失败。'
@@ -173,6 +177,22 @@ function openCreateDrawer() {
   drawerMode.value = 'create'
   drawerVisible.value = true
   resetFormModel()
+}
+
+function openDetailDialog(row: AdminUserRecord) {
+  detailRecord.value = row
+  detailDialogVisible.value = true
+}
+
+function syncDetailRecord(nextRows: AdminUserRecord[]) {
+  if (!detailRecord.value) {
+    return
+  }
+
+  detailRecord.value = nextRows.find((item) => item.id === detailRecord.value?.id) ?? null
+  if (!detailRecord.value) {
+    detailDialogVisible.value = false
+  }
 }
 
 function openEditDrawer(row: AdminUserRecord) {
@@ -293,6 +313,11 @@ async function handleDelete(row: AdminUserRecord) {
     const response = await deleteAdminUser(row.id)
     ElMessage.success(response.message)
 
+    if (detailRecord.value?.id === row.id) {
+      detailDialogVisible.value = false
+      detailRecord.value = null
+    }
+
     if (rows.value.length === 1 && filters.page > 1) {
       filters.page -= 1
     }
@@ -303,18 +328,6 @@ async function handleDelete(row: AdminUserRecord) {
   } finally {
     deleteLoadingId.value = ''
   }
-}
-
-function permissionTone(length: number) {
-  if (length >= 8) {
-    return 'danger'
-  }
-
-  if (length >= 4) {
-    return 'warning'
-  }
-
-  return 'primary'
 }
 </script>
 
@@ -403,14 +416,13 @@ function permissionTone(length: number) {
         </el-button>
       </div>
 
-      <div class="main-grid">
-        <div class="users-panel">
-          <el-table
-            v-loading="loading || tableLoading"
-            :data="rows"
-            empty-text="暂无管理员数据"
-            row-key="id"
-          >
+      <div class="users-panel">
+        <el-table
+          v-loading="loading || tableLoading"
+          :data="rows"
+          empty-text="暂无管理员数据"
+          row-key="id"
+        >
             <el-table-column
               label="账号"
               min-width="210"
@@ -494,10 +506,18 @@ function permissionTone(length: number) {
             <el-table-column
               align="right"
               label="操作"
-              min-width="260"
+              min-width="220"
             >
               <template #default="{ row }">
                 <div class="row-actions">
+                  <el-button
+                    link
+                    type="info"
+                    @click="openDetailDialog(row)"
+                  >
+                    <el-icon><View /></el-icon>
+                    详情
+                  </el-button>
                   <el-button
                     link
                     type="primary"
@@ -505,14 +525,6 @@ function permissionTone(length: number) {
                   >
                     <el-icon><EditPen /></el-icon>
                     编辑
-                  </el-button>
-                  <el-button
-                    link
-                    type="warning"
-                    @click="openResetPasswordDialog(row)"
-                  >
-                    <el-icon><Key /></el-icon>
-                    重置密码
                   </el-button>
                   <el-popconfirm
                     confirm-button-text="删除"
@@ -535,92 +547,114 @@ function permissionTone(length: number) {
             </el-table-column>
           </el-table>
 
-          <div class="pagination-wrap">
-            <el-pagination
-              background
-              layout="total, sizes, prev, pager, next"
-              :page-size="filters.pageSize"
-              :page-sizes="[10, 20, 50]"
-              :total="total"
-              :current-page="filters.page"
-              @current-change="handlePageChange"
-              @size-change="handlePageSizeChange"
-            />
-          </div>
-        </div>
-
-        <div class="side-column">
-          <PanelCard
-            description="静态角色权限先固定，页面只做分配，不引入复杂授权引擎。"
-            title="角色权限"
-          >
-            <div class="role-stack">
-              <article
-                v-for="role in roles"
-                :key="role.id"
-                class="role-card"
-              >
-                <div class="role-card__head">
-                  <div>
-                    <strong>{{ role.name }}</strong>
-                    <p>{{ role.description || '内置角色，用于静态权限映射。' }}</p>
-                  </div>
-                  <el-tag
-                    effect="plain"
-                    :type="permissionTone(role.permissions.length)"
-                  >
-                    {{ role.memberCount }} 人
-                  </el-tag>
-                </div>
-
-                <div class="tag-list">
-                  <el-tag
-                    v-for="permission in role.permissions"
-                    :key="permission.key"
-                    effect="plain"
-                    size="small"
-                  >
-                    {{ permission.label }}
-                  </el-tag>
-                </div>
-              </article>
-            </div>
-          </PanelCard>
-
-          <PanelCard
-            description="保留一屏最近操作，方便先把关键动作的审计痕迹补齐。"
-            title="最近操作日志"
-          >
-            <div
-              v-if="recentLogs.length > 0"
-              class="log-list"
-            >
-              <article
-                v-for="log in recentLogs"
-                :key="log.id"
-                class="log-item"
-              >
-                <div class="log-item__head">
-                  <el-tag
-                    effect="plain"
-                    type="info"
-                  >
-                    {{ log.actionLabel }}
-                  </el-tag>
-                  <span>{{ log.createdAtLabel }}</span>
-                </div>
-                <strong>{{ log.summary }}</strong>
-                <p>{{ log.actorDisplayName }} · {{ log.targetLabel || log.targetId || '系统对象' }}</p>
-              </article>
-            </div>
-            <el-empty
-              v-else
-              description="还没有可展示的关键操作"
-            />
-          </PanelCard>
+        <div class="pagination-wrap">
+          <el-pagination
+            background
+            layout="total, sizes, prev, pager, next"
+            :page-size="filters.pageSize"
+            :page-sizes="[10, 20, 50]"
+            :total="total"
+            :current-page="filters.page"
+            @current-change="handlePageChange"
+            @size-change="handlePageSizeChange"
+          />
         </div>
       </div>
     </PanelCard>
+
+    <el-dialog
+      v-model="detailDialogVisible"
+      :title="detailRecord ? `${detailRecord.displayName} 详情` : '管理员详情'"
+      width="820px"
+    >
+      <template v-if="detailRecord">
+        <div class="detail-grid">
+          <div class="detail-card">
+            <span>用户名</span>
+            <strong>{{ detailRecord.username }}</strong>
+          </div>
+          <div class="detail-card">
+            <span>昵称</span>
+            <strong>{{ detailRecord.nickname || '-' }}</strong>
+          </div>
+          <div class="detail-card">
+            <span>邮箱</span>
+            <strong>{{ detailRecord.email || '-' }}</strong>
+          </div>
+          <div class="detail-card">
+            <span>手机号</span>
+            <strong>{{ detailRecord.phone || '-' }}</strong>
+          </div>
+          <div class="detail-card">
+            <span>状态</span>
+            <strong>{{ detailRecord.statusLabel }}</strong>
+          </div>
+          <div class="detail-card">
+            <span>最近登录</span>
+            <strong>{{ detailRecord.lastLoginAtLabel }}</strong>
+          </div>
+          <div class="detail-card">
+            <span>创建时间</span>
+            <strong>{{ detailRecord.createdAtLabel }}</strong>
+          </div>
+          <div class="detail-card">
+            <span>更新时间</span>
+            <strong>{{ detailRecord.updatedAtLabel }}</strong>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <strong>角色</strong>
+          <div class="tag-list">
+            <el-tag
+              v-for="role in detailRecord.roles"
+              :key="role.id"
+              effect="plain"
+            >
+              {{ role.name }}
+            </el-tag>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <strong>权限</strong>
+          <div class="tag-list">
+            <el-tag
+              v-for="permission in detailRecord.permissions"
+              :key="permission"
+              effect="plain"
+              type="info"
+            >
+              {{ permission }}
+            </el-tag>
+          </div>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="detailDialogVisible = false">
+            关闭
+          </el-button>
+          <el-button
+            :icon="Key"
+            :disabled="!detailRecord"
+            type="warning"
+            @click="detailRecord && openResetPasswordDialog(detailRecord)"
+          >
+            重置密码
+          </el-button>
+          <el-button
+            :icon="EditPen"
+            :disabled="!detailRecord"
+            type="primary"
+            @click="detailRecord && openEditDrawer(detailRecord)"
+          >
+            编辑
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
 
     <el-drawer
       v-model="drawerVisible"
@@ -793,21 +827,15 @@ function permissionTone(length: number) {
   margin-bottom: 18px;
 }
 
-.main-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.8fr) minmax(320px, 0.9fr);
-  gap: 20px;
-  align-items: start;
-}
-
 .users-panel {
   display: grid;
   gap: 16px;
 }
 
-.side-column {
+.detail-grid {
   display: grid;
-  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .user-cell {
@@ -871,41 +899,30 @@ function permissionTone(length: number) {
   justify-content: flex-end;
 }
 
-.role-stack,
-.log-list {
+.detail-card,
+.detail-section {
   display: grid;
   gap: 12px;
 }
 
-.role-card,
-.log-item {
-  display: grid;
-  gap: 10px;
+.detail-card,
+.detail-section {
   padding: 14px;
   border: 1px solid var(--app-border-strong);
   border-radius: 8px;
   background: rgba(11, 17, 27, 0.62);
 }
 
-.role-card__head,
-.log-item__head,
-.drawer-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.log-item__head span {
-  color: var(--app-text-muted);
-  font-size: 12px;
-}
-
-.log-item strong,
-.role-card__head strong,
+.detail-card span,
+.detail-section strong,
 .drawer-header strong {
   font-size: 14px;
   line-height: 1.4;
+}
+
+.detail-card span {
+  color: var(--app-text-muted);
+  font-size: 12px;
 }
 
 .drawer-header {
@@ -934,14 +951,14 @@ function permissionTone(length: number) {
   .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  .main-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 @media (max-width: 900px) {
   .filters-bar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .detail-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 

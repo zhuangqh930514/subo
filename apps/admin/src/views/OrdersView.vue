@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { Check, Delete, Download, EditPen, Plus, RefreshRight, Search } from '@element-plus/icons-vue'
+import { Check, Delete, Download, EditPen, Plus, RefreshRight, Search, View } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import PanelCard from '../components/PanelCard.vue'
@@ -38,6 +38,7 @@ const detail = ref<OrderDetailRecord | null>(null)
 const editingRecord = ref<OrderDetailRecord | null>(null)
 const editingOrderId = ref('')
 const selectedId = ref('')
+const detailDialogVisible = ref(false)
 const editFormRef = ref<FormInstance>()
 const uploadFormRef = ref<FormInstance>()
 const fileInputRef = ref<HTMLInputElement | null>(null)
@@ -192,7 +193,15 @@ function selectRow(row: OrderListRecord) {
   selectedId.value = row.id
 }
 
-async function openEditDialog(row: OrderListRecord) {
+function openDetailDialog(row: OrderListRecord) {
+  selectedId.value = row.id
+  if (detail.value?.id === row.id) {
+    void loadDetail(row.id)
+  }
+  detailDialogVisible.value = true
+}
+
+async function openEditDialog(row: Pick<OrderListRecord, 'id'>) {
   if (editDialogLoading.value || editSubmitting.value) {
     return
   }
@@ -277,6 +286,10 @@ async function handleDelete(row: OrderListRecord) {
 
   try {
     const result = await deleteOrder(row.id)
+
+    if (selectedId.value === row.id) {
+      detailDialogVisible.value = false
+    }
 
     if (records.value.length === 1 && filters.page > 1) {
       filters.page -= 1
@@ -595,9 +608,12 @@ function hydrateEditForm(record: OrderDetailRecord) {
 
           <el-table-column label="订单日期" min-width="120" prop="orderDateLabel" />
           <el-table-column label="更新时间" min-width="140" prop="updatedAtLabel" />
-          <el-table-column align="right" label="操作" min-width="170">
+          <el-table-column align="right" label="操作" min-width="250">
             <template #default="{ row }">
               <div class="row-actions" @click.stop>
+                <el-button :icon="View" link type="info" @click="openDetailDialog(row)">
+                  详情
+                </el-button>
                 <el-button
                   :icon="EditPen"
                   :disabled="demoMode"
@@ -642,238 +658,250 @@ function hydrateEditForm(record: OrderDetailRecord) {
           />
         </div>
       </PanelCard>
+    </section>
 
-      <PanelCard
-        :description="detail ? '在详情里集中核对客户、抬头、询价来源和代采清单。' : '选择左侧订单查看详情。'"
-        :title="detail ? detail.orderNo : '订单详情'"
-      >
-        <el-alert
-          v-if="detailError"
-          class="detail-alert"
-          :closable="false"
-          show-icon
-          :title="detailError"
-          type="error"
-        />
+    <el-dialog
+      v-model="detailDialogVisible"
+      :title="detail ? detail.orderNo : '订单详情'"
+      width="1040px"
+    >
+      <el-alert
+        v-if="detailError"
+        class="detail-alert"
+        :closable="false"
+        show-icon
+        :title="detailError"
+        type="error"
+      />
 
-        <div v-if="detailLoading" class="detail-stack">
-          <el-skeleton :rows="10" animated />
-        </div>
+      <div v-if="detailLoading" class="detail-stack">
+        <el-skeleton :rows="10" animated />
+      </div>
 
-        <template v-else-if="detail">
-          <div class="detail-stack">
-            <div class="mini-metrics">
-              <article class="mini-metric">
-                <span>订单金额</span>
-                <strong>{{ detail.amountLabel }}</strong>
-              </article>
-              <article class="mini-metric">
-                <span>收款状态</span>
-                <strong>{{ detail.paymentStatusLabel }}</strong>
-              </article>
-              <article class="mini-metric">
-                <span>代采清单</span>
-                <strong>{{ detail.procurementSummary.procurementListCount }}</strong>
-              </article>
-              <article class="mini-metric">
-                <span>代采金额</span>
-                <strong>{{ detail.procurementSummary.procurementTotalAmountLabel }}</strong>
-              </article>
+      <template v-else-if="detail">
+        <div class="detail-stack">
+          <div class="mini-metrics">
+            <article class="mini-metric">
+              <span>订单金额</span>
+              <strong>{{ detail.amountLabel }}</strong>
+            </article>
+            <article class="mini-metric">
+              <span>收款状态</span>
+              <strong>{{ detail.paymentStatusLabel }}</strong>
+            </article>
+            <article class="mini-metric">
+              <span>代采清单</span>
+              <strong>{{ detail.procurementSummary.procurementListCount }}</strong>
+            </article>
+            <article class="mini-metric">
+              <span>代采金额</span>
+              <strong>{{ detail.procurementSummary.procurementTotalAmountLabel }}</strong>
+            </article>
+          </div>
+
+          <div class="detail-block">
+            <div class="detail-block__head">
+              <strong>订单概况</strong>
+              <el-tag :type="orderTypeTag(detail.orderType)" effect="plain" round>
+                {{ detail.orderTypeLabel }}
+              </el-tag>
             </div>
-
-            <div class="detail-block">
-              <div class="detail-block__head">
-                <strong>订单概况</strong>
-                <el-tag :type="orderTypeTag(detail.orderType)" effect="plain" round>
-                  {{ detail.orderTypeLabel }}
-                </el-tag>
+            <div class="mini-list">
+              <div class="mini-item">
+                <span class="admin-meta">客户</span>
+                <strong>{{ detail.customer.name }}</strong>
               </div>
-              <div class="mini-list">
-                <div class="mini-item">
-                  <span class="admin-meta">客户</span>
-                  <strong>{{ detail.customer.name }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">项目</span>
-                  <strong>{{ detail.projectName }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">订单日期</span>
-                  <strong>{{ detail.orderDateLabel }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">合同 / 出库单</span>
-                  <strong>{{ detail.hasContract ? '已有合同' : '暂无合同' }} / {{ detail.hasDeliveryNote ? '已有出库单' : '暂无出库单' }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">项目内容</span>
-                  <strong>{{ detail.projectContent || '-' }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">备注</span>
-                  <strong>{{ detail.remark || '-' }}</strong>
-                </div>
+              <div class="mini-item">
+                <span class="admin-meta">项目</span>
+                <strong>{{ detail.projectName }}</strong>
               </div>
-            </div>
-
-            <div class="detail-block">
-              <div class="detail-block__head">
-                <strong>客户与开票资料</strong>
-                <span class="admin-meta">{{ detail.invoiceProfile ? '已关联抬头' : '未关联抬头' }}</span>
+              <div class="mini-item">
+                <span class="admin-meta">订单日期</span>
+                <strong>{{ detail.orderDateLabel }}</strong>
               </div>
-              <div class="mini-list">
-                <div class="mini-item">
-                  <span class="admin-meta">客户来源</span>
-                  <strong>{{ detail.customer.source || '-' }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">客户类型</span>
-                  <strong>{{ detail.customer.customerTypeLabel }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">抬头</span>
-                  <strong>{{ detail.invoiceProfile?.companyName || '-' }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">税号</span>
-                  <strong>{{ detail.invoiceProfile?.taxNumber || '-' }}</strong>
-                </div>
+              <div class="mini-item">
+                <span class="admin-meta">合同 / 出库单</span>
+                <strong>{{ detail.hasContract ? '已有合同' : '暂无合同' }} / {{ detail.hasDeliveryNote ? '已有出库单' : '暂无出库单' }}</strong>
               </div>
-            </div>
-
-            <div class="detail-block">
-              <div class="detail-block__head">
-                <strong>来源询价</strong>
-                <span class="admin-meta">{{ detail.quoteRequest ? detail.quoteRequest.quoteNo : '未关联' }}</span>
+              <div class="mini-item">
+                <span class="admin-meta">项目内容</span>
+                <strong>{{ detail.projectContent || '-' }}</strong>
               </div>
-              <div v-if="detail.quoteRequest" class="detail-item">
-                <div class="detail-item__head">
-                  <strong>{{ detail.quoteRequest.quoteNo }}</strong>
-                  <el-tag :type="quoteBusinessTag(detail.quoteRequest.businessType)" effect="plain" round>
-                    {{ detail.quoteRequest.businessTypeLabel }}
-                  </el-tag>
-                </div>
-                <div class="detail-meta">
-                  {{ detail.quoteRequest.companyName || detail.quoteRequest.contactName }}
-                </div>
-                <div class="detail-meta">
-                  {{ detail.quoteRequest.estimatedTotalAmountLabel }} · {{ detail.quoteRequest.updatedAtLabel }}
-                </div>
-                <div class="detail-item__head">
-                  <span class="detail-meta">{{ detail.quoteRequest.contactName }}</span>
-                  <el-tag :type="quoteStatusTag(detail.quoteRequest.status)" effect="plain" round size="small">
-                    {{ detail.quoteRequest.statusLabel }}
-                  </el-tag>
-                </div>
-              </div>
-              <el-empty v-else description="未关联来源询价" :image-size="72" />
-            </div>
-
-            <div class="detail-block">
-              <div class="detail-block__head">
-                <div class="section-heading">
-                  <strong>合同档案</strong>
-                  <span class="admin-meta">{{ detail.contracts.length }} 份</span>
-                </div>
-                <el-button :icon="Plus" size="small" type="primary" @click="openUploadDialog">
-                  上传合同
-                </el-button>
-              </div>
-              <div v-if="detail.contracts.length" class="detail-list detail-list--contracts">
-                <article
-                  v-for="item in detail.contracts"
-                  :key="item.id"
-                  class="detail-item"
-                >
-                  <div class="detail-item__head">
-                    <strong>{{ item.contractName }}</strong>
-                    <el-tag
-                      :type="item.downloadAvailable ? 'success' : 'warning'"
-                      effect="plain"
-                      round
-                    >
-                      {{ item.sourceLabel }}
-                    </el-tag>
-                  </div>
-                  <div class="detail-meta">{{ item.fileName }}</div>
-                  <div class="detail-meta">
-                    {{ item.fileType.toUpperCase() }} · {{ item.fileSizeLabel }} · {{ item.updatedAtLabel }}
-                  </div>
-                  <div class="detail-item__actions">
-                    <el-button
-                      :icon="Download"
-                      :loading="downloadingContractId === item.id"
-                      :disabled="!item.downloadAvailable"
-                      plain
-                      size="small"
-                      @click="handleContractDownload(item)"
-                    >
-                      {{ item.downloadAvailable ? '下载文件' : '暂不可下载' }}
-                    </el-button>
-                  </div>
-                </article>
-              </div>
-              <div v-else class="contract-empty">
-                <el-empty description="暂无合同档案" :image-size="72" />
-                <el-button :icon="Plus" type="primary" @click="openUploadDialog">
-                  先上传第一份合同
-                </el-button>
-              </div>
-            </div>
-
-            <div class="detail-block">
-              <div class="detail-block__head">
-                <strong>代采清单</strong>
-                <span class="admin-meta">{{ detail.procurementLists.length }} 份</span>
-              </div>
-              <div v-if="detail.procurementLists.length" class="detail-list">
-                <article
-                  v-for="item in detail.procurementLists"
-                  :key="item.id"
-                  class="detail-item"
-                >
-                  <div class="detail-item__head">
-                    <strong>{{ item.listNo }}</strong>
-                    <el-tag effect="plain" round type="success">
-                      {{ item.platform }}
-                    </el-tag>
-                  </div>
-                  <div class="detail-meta">{{ item.title }}</div>
-                  <div class="detail-meta">
-                    {{ item.statusLabel }} · {{ item.itemCount }} 条 · {{ item.totalAmountLabel }}
-                  </div>
-                </article>
-              </div>
-              <el-empty v-else description="暂无代采清单" :image-size="72" />
-            </div>
-
-            <div v-if="detail.integrityFlags.length" class="detail-block">
-              <div class="detail-block__head">
-                <strong>迁移提示</strong>
-                <span class="admin-meta">建议优先核对</span>
-              </div>
-              <div class="integrity-flags">
-                <el-tag
-                  v-for="flag in detail.integrityFlags"
-                  :key="flag"
-                  effect="plain"
-                  round
-                  type="warning"
-                >
-                  {{ flag }}
-                </el-tag>
+              <div class="mini-item">
+                <span class="admin-meta">备注</span>
+                <strong>{{ detail.remark || '-' }}</strong>
               </div>
             </div>
           </div>
-        </template>
 
-        <el-empty
-          v-else
-          description="请先从左侧选择一个订单"
-          :image-size="80"
-        />
-      </PanelCard>
-    </section>
+          <div class="detail-block">
+            <div class="detail-block__head">
+              <strong>客户与开票资料</strong>
+              <span class="admin-meta">{{ detail.invoiceProfile ? '已关联抬头' : '未关联抬头' }}</span>
+            </div>
+            <div class="mini-list">
+              <div class="mini-item">
+                <span class="admin-meta">客户来源</span>
+                <strong>{{ detail.customer.source || '-' }}</strong>
+              </div>
+              <div class="mini-item">
+                <span class="admin-meta">客户类型</span>
+                <strong>{{ detail.customer.customerTypeLabel }}</strong>
+              </div>
+              <div class="mini-item">
+                <span class="admin-meta">抬头</span>
+                <strong>{{ detail.invoiceProfile?.companyName || '-' }}</strong>
+              </div>
+              <div class="mini-item">
+                <span class="admin-meta">税号</span>
+                <strong>{{ detail.invoiceProfile?.taxNumber || '-' }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-block">
+            <div class="detail-block__head">
+              <strong>来源询价</strong>
+              <span class="admin-meta">{{ detail.quoteRequest ? detail.quoteRequest.quoteNo : '未关联' }}</span>
+            </div>
+            <div v-if="detail.quoteRequest" class="detail-item">
+              <div class="detail-item__head">
+                <strong>{{ detail.quoteRequest.quoteNo }}</strong>
+                <el-tag :type="quoteBusinessTag(detail.quoteRequest.businessType)" effect="plain" round>
+                  {{ detail.quoteRequest.businessTypeLabel }}
+                </el-tag>
+              </div>
+              <div class="detail-meta">
+                {{ detail.quoteRequest.companyName || detail.quoteRequest.contactName }}
+              </div>
+              <div class="detail-meta">
+                {{ detail.quoteRequest.estimatedTotalAmountLabel }} · {{ detail.quoteRequest.updatedAtLabel }}
+              </div>
+              <div class="detail-item__head">
+                <span class="detail-meta">{{ detail.quoteRequest.contactName }}</span>
+                <el-tag :type="quoteStatusTag(detail.quoteRequest.status)" effect="plain" round size="small">
+                  {{ detail.quoteRequest.statusLabel }}
+                </el-tag>
+              </div>
+            </div>
+            <el-empty v-else description="未关联来源询价" :image-size="72" />
+          </div>
+
+          <div class="detail-block">
+            <div class="detail-block__head">
+              <div class="section-heading">
+                <strong>合同档案</strong>
+                <span class="admin-meta">{{ detail.contracts.length }} 份</span>
+              </div>
+              <el-button :icon="Plus" size="small" type="primary" @click="openUploadDialog">
+                上传合同
+              </el-button>
+            </div>
+            <div v-if="detail.contracts.length" class="detail-list detail-list--contracts">
+              <article
+                v-for="item in detail.contracts"
+                :key="item.id"
+                class="detail-item"
+              >
+                <div class="detail-item__head">
+                  <strong>{{ item.contractName }}</strong>
+                  <el-tag
+                    :type="item.downloadAvailable ? 'success' : 'warning'"
+                    effect="plain"
+                    round
+                  >
+                    {{ item.sourceLabel }}
+                  </el-tag>
+                </div>
+                <div class="detail-meta">{{ item.fileName }}</div>
+                <div class="detail-meta">
+                  {{ item.fileType.toUpperCase() }} · {{ item.fileSizeLabel }} · {{ item.updatedAtLabel }}
+                </div>
+                <div class="detail-item__actions">
+                  <el-button
+                    :icon="Download"
+                    :loading="downloadingContractId === item.id"
+                    :disabled="!item.downloadAvailable"
+                    plain
+                    size="small"
+                    @click="handleContractDownload(item)"
+                  >
+                    {{ item.downloadAvailable ? '下载文件' : '暂不可下载' }}
+                  </el-button>
+                </div>
+              </article>
+            </div>
+            <div v-else class="contract-empty">
+              <el-empty description="暂无合同档案" :image-size="72" />
+              <el-button :icon="Plus" type="primary" @click="openUploadDialog">
+                先上传第一份合同
+              </el-button>
+            </div>
+          </div>
+
+          <div class="detail-block">
+            <div class="detail-block__head">
+              <strong>代采清单</strong>
+              <span class="admin-meta">{{ detail.procurementLists.length }} 份</span>
+            </div>
+            <div v-if="detail.procurementLists.length" class="detail-list">
+              <article
+                v-for="item in detail.procurementLists"
+                :key="item.id"
+                class="detail-item"
+              >
+                <div class="detail-item__head">
+                  <strong>{{ item.listNo }}</strong>
+                  <el-tag effect="plain" round type="success">
+                    {{ item.platform }}
+                  </el-tag>
+                </div>
+                <div class="detail-meta">{{ item.title }}</div>
+                <div class="detail-meta">
+                  {{ item.statusLabel }} · {{ item.itemCount }} 条 · {{ item.totalAmountLabel }}
+                </div>
+              </article>
+            </div>
+            <el-empty v-else description="暂无代采清单" :image-size="72" />
+          </div>
+
+          <div v-if="detail.integrityFlags.length" class="detail-block">
+            <div class="detail-block__head">
+              <strong>迁移提示</strong>
+              <span class="admin-meta">建议优先核对</span>
+            </div>
+            <div class="integrity-flags">
+              <el-tag
+                v-for="flag in detail.integrityFlags"
+                :key="flag"
+                effect="plain"
+                round
+                type="warning"
+              >
+                {{ flag }}
+              </el-tag>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="detailDialogVisible = false">关闭</el-button>
+          <el-button :icon="Plus" type="primary" @click="openUploadDialog">
+            上传合同
+          </el-button>
+          <el-button
+            :icon="EditPen"
+            :disabled="!detail || demoMode"
+            type="primary"
+            @click="detail && openEditDialog(detail)"
+          >
+            编辑订单
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
 
     <el-dialog
       v-model="editDialogVisible"
@@ -1088,7 +1116,7 @@ function hydrateEditForm(record: OrderDetailRecord) {
 
 .orders-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.9fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
   align-items: start;
 }

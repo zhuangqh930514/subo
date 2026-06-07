@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { Check, CircleCheck, Delete, RefreshRight, Switch, User } from '@element-plus/icons-vue'
+import { Check, CircleCheck, Delete, EditPen, RefreshRight, Switch, User, View } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import PanelCard from '../components/PanelCard.vue'
@@ -47,6 +47,8 @@ const activeBusiness = ref<(typeof businessFilters)[number]>('全部')
 const activeStatus = ref<(typeof statusFilters)[number]>('全部')
 const ownerDraft = ref('')
 const statusDraft = ref<QuotePoolRecord['statusKey']>('pending')
+const detailDialogVisible = ref(false)
+const editDialogVisible = ref(false)
 const createOrderDialogVisible = ref(false)
 const createOrderFormRef = ref<FormInstance>()
 
@@ -168,6 +170,16 @@ function selectRow(row: QuotePoolRecord) {
   selectedId.value = row.id
 }
 
+function openDetailDialog(row: QuotePoolRecord) {
+  selectedId.value = row.id
+  detailDialogVisible.value = true
+}
+
+function openEditDialog(row: QuotePoolRecord) {
+  selectedId.value = row.id
+  editDialogVisible.value = true
+}
+
 async function handleAssignOwner() {
   if (!selectedRecord.value || ownerSaving.value) {
     return
@@ -215,6 +227,11 @@ async function handleDelete(row: QuotePoolRecord) {
 
   try {
     const response = await deleteQuoteRequest(row.id)
+    if (selectedId.value === row.id) {
+      detailDialogVisible.value = false
+      editDialogVisible.value = false
+      createOrderDialogVisible.value = false
+    }
     await loadQuotePool()
     ElMessage.success(response.message)
   } catch (error) {
@@ -514,9 +531,15 @@ function sourceTagType(sourceKey: QuotePoolRecord['sourceKey']) {
           <el-table-column label="负责人" min-width="120" prop="owner" />
           <el-table-column label="金额" min-width="120" prop="amountLabel" />
           <el-table-column label="更新时间" min-width="140" prop="updatedAtLabel" />
-          <el-table-column align="right" label="操作" min-width="120">
+          <el-table-column align="right" label="操作" min-width="240">
             <template #default="{ row }">
               <div class="row-actions" @click.stop>
+                <el-button :icon="View" link type="info" @click="openDetailDialog(row)">
+                  详情
+                </el-button>
+                <el-button :icon="EditPen" link type="primary" @click="openEditDialog(row)">
+                  编辑
+                </el-button>
                 <el-popconfirm
                   confirm-button-text="删除"
                   title="删除后该询价会从询价池移除，确认继续？"
@@ -539,151 +562,193 @@ function sourceTagType(sourceKey: QuotePoolRecord['sourceKey']) {
         </el-table>
       </PanelCard>
 
-      <PanelCard
-        class="quote-detail-panel"
-        description="右侧直接处理负责人、状态和转订单，不用再跳去别处补闭环。"
-        title="线索详情"
-      >
-        <template v-if="selectedRecord">
-          <div class="detail-block">
-            <div class="detail-head">
-              <strong>{{ selectedRecord.customer }}</strong>
-              <el-tag :type="statusTagType(selectedRecord.statusKey)" effect="plain" round>
-                {{ selectedRecord.status }}
-              </el-tag>
-            </div>
-            <p class="detail-meta">{{ selectedRecord.contactName }} · {{ selectedRecord.contactChannel }}</p>
-            <p class="detail-meta">{{ selectedRecord.quoteNo }} · {{ selectedRecord.updatedAtLabel }}</p>
-            <div v-if="selectedRecord.linkedOrder" class="linked-order">
-              <span class="panel-meta">已关联订单</span>
-              <strong>{{ selectedRecord.linkedOrder.orderNo }}</strong>
-            </div>
-          </div>
-
-          <div class="detail-block">
-            <div class="detail-head">
-              <h4>处理动作</h4>
-              <el-button
-                :icon="CircleCheck"
-                :disabled="demoMode || Boolean(selectedRecord.linkedOrder)"
-                type="primary"
-                @click="openCreateOrderDialog"
-              >
-                {{ selectedRecord.linkedOrder ? '已创建订单' : '转为订单' }}
-              </el-button>
-            </div>
-
-            <div class="action-stack">
-              <div class="action-row">
-                <span>负责人</span>
-                <div class="action-controls">
-                  <el-select
-                    v-model="ownerDraft"
-                    :disabled="demoMode"
-                    clearable
-                    filterable
-                    placeholder="选择负责人"
-                  >
-                    <el-option
-                      v-for="item in ownerOptions"
-                      :key="item.id"
-                      :label="item.label"
-                      :value="item.id"
-                    />
-                  </el-select>
-                  <el-button
-                    :icon="User"
-                    :loading="ownerSaving"
-                    :disabled="demoMode"
-                    @click="handleAssignOwner"
-                  >
-                    保存
-                  </el-button>
-                </div>
-              </div>
-
-              <div class="action-row">
-                <span>询价状态</span>
-                <div class="action-controls">
-                  <el-select
-                    v-model="statusDraft"
-                    :disabled="demoMode"
-                    placeholder="选择状态"
-                  >
-                    <el-option
-                      v-for="item in statusOptions"
-                      :key="item.value"
-                      :label="item.label"
-                      :value="item.value"
-                    />
-                  </el-select>
-                  <el-button
-                    :icon="Switch"
-                    :loading="statusSaving"
-                    :disabled="demoMode"
-                    @click="handleUpdateStatus"
-                  >
-                    更新
-                  </el-button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="detail-block">
-            <h4>询价摘要</h4>
-            <div class="detail-kv">
-              <span>业务类型</span>
-              <strong>{{ selectedRecord.businessType }}</strong>
-            </div>
-            <div class="detail-kv">
-              <span>来源</span>
-              <strong>{{ selectedRecord.source }}</strong>
-            </div>
-            <div class="detail-kv">
-              <span>负责人</span>
-              <strong>{{ selectedRecord.owner }}</strong>
-            </div>
-            <div class="detail-kv">
-              <span>预估金额</span>
-              <strong>{{ selectedRecord.amountLabel }}</strong>
-            </div>
-          </div>
-
-          <div class="detail-block">
-            <h4>备注</h4>
-            <p class="detail-copy">{{ selectedRecord.remark || '暂无备注' }}</p>
-          </div>
-
-          <div class="detail-block">
-            <div class="detail-head">
-              <h4>条目明细</h4>
-              <span class="detail-meta">{{ selectedRecord.itemCount }} 项</span>
-            </div>
-
-            <div
-              v-if="selectedRecord.items.length > 0"
-              class="item-list"
-            >
-              <article
-                v-for="item in selectedRecord.items"
-                :key="`${selectedRecord.id}-${item.itemName}-${item.itemCode ?? item.specification ?? item.quantity}`"
-                class="item-card"
-              >
-                <div>
-                  <strong>{{ item.itemName }}</strong>
-                  <p>{{ item.itemCode || '无货号' }} · {{ item.specification || '未填写规格' }}</p>
-                </div>
-                <span>{{ item.subtotalLabel }}</span>
-              </article>
-            </div>
-            <el-empty v-else description="当前记录没有条目明细。" />
-          </div>
-        </template>
-
-        <el-empty v-else description="请选择一条询价记录" />
-      </PanelCard>
     </section>
+
+    <el-dialog
+      v-model="detailDialogVisible"
+      :title="selectedRecord ? selectedRecord.quoteNo : '询价详情'"
+      width="960px"
+    >
+      <template v-if="selectedRecord">
+        <div class="detail-block">
+          <div class="detail-head">
+            <strong>{{ selectedRecord.customer }}</strong>
+            <el-tag :type="statusTagType(selectedRecord.statusKey)" effect="plain" round>
+              {{ selectedRecord.status }}
+            </el-tag>
+          </div>
+          <p class="detail-meta">{{ selectedRecord.contactName }} · {{ selectedRecord.contactChannel }}</p>
+          <p class="detail-meta">{{ selectedRecord.quoteNo }} · {{ selectedRecord.updatedAtLabel }}</p>
+          <div v-if="selectedRecord.linkedOrder" class="linked-order">
+            <span class="panel-meta">已关联订单</span>
+            <strong>{{ selectedRecord.linkedOrder.orderNo }}</strong>
+          </div>
+        </div>
+
+        <div class="detail-block">
+          <h4>询价摘要</h4>
+          <div class="detail-kv">
+            <span>业务类型</span>
+            <strong>{{ selectedRecord.businessType }}</strong>
+          </div>
+          <div class="detail-kv">
+            <span>来源</span>
+            <strong>{{ selectedRecord.source }}</strong>
+          </div>
+          <div class="detail-kv">
+            <span>负责人</span>
+            <strong>{{ selectedRecord.owner }}</strong>
+          </div>
+          <div class="detail-kv">
+            <span>预估金额</span>
+            <strong>{{ selectedRecord.amountLabel }}</strong>
+          </div>
+        </div>
+
+        <div class="detail-block">
+          <h4>备注</h4>
+          <p class="detail-copy">{{ selectedRecord.remark || '暂无备注' }}</p>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-head">
+            <h4>条目明细</h4>
+            <span class="detail-meta">{{ selectedRecord.itemCount }} 项</span>
+          </div>
+
+          <div
+            v-if="selectedRecord.items.length > 0"
+            class="item-list"
+          >
+            <article
+              v-for="item in selectedRecord.items"
+              :key="`${selectedRecord.id}-${item.itemName}-${item.itemCode ?? item.specification ?? item.quantity}`"
+              class="item-card"
+            >
+              <div>
+                <strong>{{ item.itemName }}</strong>
+                <p>{{ item.itemCode || '无货号' }} · {{ item.specification || '未填写规格' }}</p>
+              </div>
+              <span>{{ item.subtotalLabel }}</span>
+            </article>
+          </div>
+          <el-empty v-else description="当前记录没有条目明细。" />
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="detailDialogVisible = false">关闭</el-button>
+          <el-button
+            :icon="EditPen"
+            :disabled="!selectedRecord"
+            type="primary"
+            @click="selectedRecord && openEditDialog(selectedRecord)"
+          >
+            编辑
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="editDialogVisible"
+      :title="selectedRecord ? `${selectedRecord.quoteNo} · 编辑` : '编辑询价'"
+      width="880px"
+    >
+      <template v-if="selectedRecord">
+        <div class="detail-block">
+          <div class="detail-head">
+            <strong>{{ selectedRecord.customer }}</strong>
+            <el-tag :type="statusTagType(selectedRecord.statusKey)" effect="plain" round>
+              {{ selectedRecord.status }}
+            </el-tag>
+          </div>
+          <p class="detail-meta">{{ selectedRecord.contactName }} · {{ selectedRecord.contactChannel }}</p>
+          <p class="detail-meta">{{ selectedRecord.quoteNo }} · {{ selectedRecord.updatedAtLabel }}</p>
+          <div v-if="selectedRecord.linkedOrder" class="linked-order">
+            <span class="panel-meta">已关联订单</span>
+            <strong>{{ selectedRecord.linkedOrder.orderNo }}</strong>
+          </div>
+        </div>
+
+        <div class="detail-block">
+          <div class="detail-head">
+            <h4>处理动作</h4>
+            <el-button
+              :icon="CircleCheck"
+              :disabled="demoMode || Boolean(selectedRecord.linkedOrder)"
+              type="primary"
+              @click="openCreateOrderDialog"
+            >
+              {{ selectedRecord.linkedOrder ? '已创建订单' : '转为订单' }}
+            </el-button>
+          </div>
+
+          <div class="action-stack">
+            <div class="action-row">
+              <span>负责人</span>
+              <div class="action-controls">
+                <el-select
+                  v-model="ownerDraft"
+                  :disabled="demoMode"
+                  clearable
+                  filterable
+                  placeholder="选择负责人"
+                >
+                  <el-option
+                    v-for="item in ownerOptions"
+                    :key="item.id"
+                    :label="item.label"
+                    :value="item.id"
+                  />
+                </el-select>
+                <el-button
+                  :icon="User"
+                  :loading="ownerSaving"
+                  :disabled="demoMode"
+                  @click="handleAssignOwner"
+                >
+                  保存
+                </el-button>
+              </div>
+            </div>
+
+            <div class="action-row">
+              <span>询价状态</span>
+              <div class="action-controls">
+                <el-select
+                  v-model="statusDraft"
+                  :disabled="demoMode"
+                  placeholder="选择状态"
+                >
+                  <el-option
+                    v-for="item in statusOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select>
+                <el-button
+                  :icon="Switch"
+                  :loading="statusSaving"
+                  :disabled="demoMode"
+                  @click="handleUpdateStatus"
+                >
+                  更新
+                </el-button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="editDialogVisible = false">关闭</el-button>
+        </div>
+      </template>
+    </el-dialog>
 
     <el-dialog
       v-model="createOrderDialogVisible"
@@ -842,7 +907,7 @@ function sourceTagType(sourceKey: QuotePoolRecord['sourceKey']) {
 
 .quotes-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) 380px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
 }
 

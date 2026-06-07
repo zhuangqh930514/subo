@@ -6,7 +6,7 @@ import {
   type FormInstance,
   type FormRules,
 } from 'element-plus'
-import { EditPen, Plus, RefreshRight, Search, Star } from '@element-plus/icons-vue'
+import { Delete, EditPen, Plus, RefreshRight, Search, Star, View } from '@element-plus/icons-vue'
 import PanelCard from '../components/PanelCard.vue'
 import {
   createInvoiceProfile,
@@ -39,6 +39,7 @@ const detailError = ref('')
 const response = ref<PagedResponse<InvoiceProfileListRecord> | null>(null)
 const detail = ref<InvoiceProfileDetailRecord | null>(null)
 const selectedId = ref('')
+const detailDialogVisible = ref(false)
 const invoiceDialogVisible = ref(false)
 const invoiceDialogMode = ref<'create' | 'edit'>('create')
 const invoiceFormRef = ref<FormInstance>()
@@ -225,6 +226,14 @@ function selectRow(row: InvoiceProfileListRecord) {
   selectedId.value = row.id
 }
 
+function openDetailDialog(row: InvoiceProfileListRecord) {
+  selectedId.value = row.id
+  if (detail.value?.id === row.id) {
+    void loadDetail(row.id)
+  }
+  detailDialogVisible.value = true
+}
+
 function openCreateDialog() {
   invoiceDialogMode.value = 'create'
   resetInvoiceForm()
@@ -232,24 +241,33 @@ function openCreateDialog() {
   invoiceDialogVisible.value = true
 }
 
-async function openEditDialog() {
-  if (!detail.value) {
+async function openEditDialog(row?: InvoiceProfileListRecord) {
+  const sourceRecord =
+    row && detail.value?.id !== row.id
+      ? (await fetchInvoiceProfileDetail(row.id)).record
+      : detail.value
+
+  if (!sourceRecord) {
     return
   }
 
   invoiceDialogMode.value = 'edit'
-  invoiceForm.id = detail.value.id
-  invoiceForm.customerId = detail.value.customer.id
-  invoiceForm.customerName = detail.value.customer.name
-  invoiceForm.companyName = detail.value.companyName
-  invoiceForm.taxNumber = detail.value.taxNumber
-  invoiceForm.address = detail.value.address
-  invoiceForm.phone = detail.value.phone
-  invoiceForm.bankName = detail.value.bankName
-  invoiceForm.bankAccount = detail.value.bankAccount
-  invoiceForm.isDefault = detail.value.isDefault
-  await ensureCustomerOption(detail.value.customer.id, detail.value.customer.name)
+  invoiceForm.id = sourceRecord.id
+  invoiceForm.customerId = sourceRecord.customer.id
+  invoiceForm.customerName = sourceRecord.customer.name
+  invoiceForm.companyName = sourceRecord.companyName
+  invoiceForm.taxNumber = sourceRecord.taxNumber
+  invoiceForm.address = sourceRecord.address
+  invoiceForm.phone = sourceRecord.phone
+  invoiceForm.bankName = sourceRecord.bankName
+  invoiceForm.bankAccount = sourceRecord.bankAccount
+  invoiceForm.isDefault = sourceRecord.isDefault
+  await ensureCustomerOption(sourceRecord.customer.id, sourceRecord.customer.name)
   invoiceDialogVisible.value = true
+}
+
+function handleDeleteUnavailable() {
+  ElMessage.warning('当前暂无删除开票资料接口。')
 }
 
 async function saveInvoiceForm() {
@@ -487,6 +505,21 @@ function toBoolean(value: BooleanFilter) {
           <el-table-column label="累计金额" min-width="130" prop="totalOrderAmountLabel" />
           <el-table-column label="最近订单" min-width="120" prop="lastOrderDateLabel" />
           <el-table-column label="更新时间" min-width="140" prop="updatedAtLabel" />
+          <el-table-column align="right" label="操作" min-width="240">
+            <template #default="{ row }">
+              <div class="row-actions" @click.stop>
+                <el-button :icon="View" link type="info" @click="openDetailDialog(row)">
+                  详情
+                </el-button>
+                <el-button :icon="EditPen" link type="primary" @click="openEditDialog(row)">
+                  编辑
+                </el-button>
+                <el-button :icon="Delete" link type="danger" @click="handleDeleteUnavailable">
+                  删除
+                </el-button>
+              </div>
+            </template>
+          </el-table-column>
         </el-table>
 
         <div class="pagination-row">
@@ -502,149 +535,141 @@ function toBoolean(value: BooleanFilter) {
           />
         </div>
       </PanelCard>
-
-      <PanelCard
-        :description="detail ? '核对抬头与订单归属，及时识别迁移后的客户映射差异。' : '选择左侧抬头查看详情。'"
-        :title="detail ? detail.companyName : '开票详情'"
-      >
-        <template #extra>
-          <div class="panel-extra">
-            <el-button :icon="Plus" size="large" @click="openCreateDialog">
-              新增
-            </el-button>
-            <el-button
-              v-if="detail"
-              :icon="EditPen"
-              size="large"
-              @click="openEditDialog"
-            >
-              编辑
-            </el-button>
-            <el-button
-              v-if="detail && !detail.isDefault"
-              :icon="Star"
-              :loading="saving"
-              size="large"
-              type="primary"
-              @click="makeDefaultInvoiceProfile"
-            >
-              设为默认
-            </el-button>
-          </div>
-        </template>
-
-        <el-alert
-          v-if="detailError"
-          class="detail-alert"
-          :closable="false"
-          show-icon
-          :title="detailError"
-          type="error"
-        />
-
-        <div v-if="detailLoading" class="detail-stack">
-          <el-skeleton :rows="9" animated />
-        </div>
-
-        <template v-else-if="detail">
-          <div class="detail-stack">
-            <div class="mini-metrics">
-              <article class="mini-metric">
-                <span>订单数</span>
-                <strong>{{ detail.stats.orderCount }}</strong>
-              </article>
-              <article class="mini-metric">
-                <span>累计金额</span>
-                <strong>{{ detail.stats.totalOrderAmountLabel }}</strong>
-              </article>
-              <article class="mini-metric">
-                <span>已收款订单</span>
-                <strong>{{ detail.stats.paidOrderCount }}</strong>
-              </article>
-              <article class="mini-metric">
-                <span>映射差异</span>
-                <strong>{{ detail.stats.mismatchedOrderCustomerCount }}</strong>
-              </article>
-            </div>
-
-            <div class="detail-block">
-              <div class="detail-block__head">
-                <strong>抬头信息</strong>
-                <el-tag :type="detail.isDefault ? 'success' : 'info'" effect="plain" round>
-                  {{ detail.isDefault ? '默认抬头' : '备用抬头' }}
-                </el-tag>
-              </div>
-              <div class="mini-list">
-                <div class="mini-item">
-                  <span class="admin-meta">客户</span>
-                  <strong>{{ detail.customer.name }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">税号</span>
-                  <strong>{{ detail.taxNumber || '-' }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">开户地址</span>
-                  <strong>{{ detail.address || '-' }}</strong>
-                </div>
-                <div class="mini-item">
-                  <span class="admin-meta">银行信息</span>
-                  <strong>{{ detail.bankName || '-' }} {{ detail.bankAccount || '' }}</strong>
-                </div>
-              </div>
-            </div>
-
-            <div class="detail-block">
-              <div class="detail-block__head">
-                <strong>关联订单</strong>
-                <span class="admin-meta">{{ detail.orders.length }} 笔</span>
-              </div>
-              <div v-if="detail.orders.length" class="detail-list">
-                <article
-                  v-for="item in detail.orders"
-                  :key="item.id"
-                  class="detail-item"
-                >
-                  <div class="detail-item__head">
-                    <strong>{{ item.orderNo }}</strong>
-                    <el-tag :type="orderTypeTag(item.orderType)" effect="plain" round>
-                      {{ item.orderTypeLabel }}
-                    </el-tag>
-                  </div>
-                  <div class="detail-meta">{{ item.customer.name }} · {{ item.projectName }}</div>
-                  <div class="detail-meta">
-                    {{ item.amountLabel }} ·
-                    <el-tag :type="paymentTag(item.isPaid)" effect="plain" round size="small">
-                      {{ item.paymentStatusLabel }}
-                    </el-tag>
-                  </div>
-                  <div class="detail-meta">{{ item.orderDateLabel }} · {{ item.updatedAtLabel }}</div>
-                  <div v-if="item.integrityFlags.length" class="integrity-flags">
-                    <el-tag
-                      v-for="flag in item.integrityFlags"
-                      :key="flag"
-                      effect="plain"
-                      round
-                      size="small"
-                      type="warning"
-                    >
-                      {{ flag }}
-                    </el-tag>
-                  </div>
-                </article>
-              </div>
-              <el-empty v-else description="暂无关联订单" :image-size="72" />
-            </div>
-          </div>
-        </template>
-
-        <el-empty
-          v-else
-          description="请先从左侧选择一条开票资料"
-          :image-size="80"
-        />
-      </PanelCard>
     </section>
+
+    <el-dialog
+      v-model="detailDialogVisible"
+      :title="detail ? detail.companyName : '开票详情'"
+      width="960px"
+    >
+      <el-alert
+        v-if="detailError"
+        class="detail-alert"
+        :closable="false"
+        show-icon
+        :title="detailError"
+        type="error"
+      />
+
+      <div v-if="detailLoading" class="detail-stack">
+        <el-skeleton :rows="9" animated />
+      </div>
+
+      <template v-else-if="detail">
+        <div class="detail-stack">
+          <div class="mini-metrics">
+            <article class="mini-metric">
+              <span>订单数</span>
+              <strong>{{ detail.stats.orderCount }}</strong>
+            </article>
+            <article class="mini-metric">
+              <span>累计金额</span>
+              <strong>{{ detail.stats.totalOrderAmountLabel }}</strong>
+            </article>
+            <article class="mini-metric">
+              <span>已收款订单</span>
+              <strong>{{ detail.stats.paidOrderCount }}</strong>
+            </article>
+            <article class="mini-metric">
+              <span>映射差异</span>
+              <strong>{{ detail.stats.mismatchedOrderCustomerCount }}</strong>
+            </article>
+          </div>
+
+          <div class="detail-block">
+            <div class="detail-block__head">
+              <strong>抬头信息</strong>
+              <el-tag :type="detail.isDefault ? 'success' : 'info'" effect="plain" round>
+                {{ detail.isDefault ? '默认抬头' : '备用抬头' }}
+              </el-tag>
+            </div>
+            <div class="mini-list">
+              <div class="mini-item">
+                <span class="admin-meta">客户</span>
+                <strong>{{ detail.customer.name }}</strong>
+              </div>
+              <div class="mini-item">
+                <span class="admin-meta">税号</span>
+                <strong>{{ detail.taxNumber || '-' }}</strong>
+              </div>
+              <div class="mini-item">
+                <span class="admin-meta">开户地址</span>
+                <strong>{{ detail.address || '-' }}</strong>
+              </div>
+              <div class="mini-item">
+                <span class="admin-meta">银行信息</span>
+                <strong>{{ detail.bankName || '-' }} {{ detail.bankAccount || '' }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-block">
+            <div class="detail-block__head">
+              <strong>关联订单</strong>
+              <span class="admin-meta">{{ detail.orders.length }} 笔</span>
+            </div>
+            <div v-if="detail.orders.length" class="detail-list">
+              <article
+                v-for="item in detail.orders"
+                :key="item.id"
+                class="detail-item"
+              >
+                <div class="detail-item__head">
+                  <strong>{{ item.orderNo }}</strong>
+                  <el-tag :type="orderTypeTag(item.orderType)" effect="plain" round>
+                    {{ item.orderTypeLabel }}
+                  </el-tag>
+                </div>
+                <div class="detail-meta">{{ item.customer.name }} · {{ item.projectName }}</div>
+                <div class="detail-meta">
+                  {{ item.amountLabel }} ·
+                  <el-tag :type="paymentTag(item.isPaid)" effect="plain" round size="small">
+                    {{ item.paymentStatusLabel }}
+                  </el-tag>
+                </div>
+                <div class="detail-meta">{{ item.orderDateLabel }} · {{ item.updatedAtLabel }}</div>
+                <div v-if="item.integrityFlags.length" class="integrity-flags">
+                  <el-tag
+                    v-for="flag in item.integrityFlags"
+                    :key="flag"
+                    effect="plain"
+                    round
+                    size="small"
+                    type="warning"
+                  >
+                    {{ flag }}
+                  </el-tag>
+                </div>
+              </article>
+            </div>
+            <el-empty v-else description="暂无关联订单" :image-size="72" />
+          </div>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="detailDialogVisible = false">关闭</el-button>
+          <el-button
+            v-if="detail && !detail.isDefault"
+            :icon="Star"
+            :loading="saving"
+            type="primary"
+            @click="makeDefaultInvoiceProfile"
+          >
+            设为默认
+          </el-button>
+          <el-button
+            :icon="EditPen"
+            :disabled="!detail"
+            type="primary"
+            @click="detail && openEditDialog()"
+          >
+            编辑
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
 
     <el-dialog
       v-model="invoiceDialogVisible"
@@ -753,14 +778,15 @@ function toBoolean(value: BooleanFilter) {
 
 .crm-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.95fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
   align-items: start;
 }
 
 .panel-extra,
-.toolbar-actions,
-.detail-item__head,
+  .toolbar-actions,
+  .row-actions,
+  .detail-item__head,
 .detail-block__head,
 .pagination-row,
 .dialog-footer {
@@ -797,6 +823,12 @@ function toBoolean(value: BooleanFilter) {
 .toolbar-actions,
 .dialog-footer {
   justify-content: flex-end;
+}
+
+.row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .primary-cell strong {
