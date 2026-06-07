@@ -5,9 +5,15 @@ import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { downloadContractFile, uploadOrderContract } from '../api/contracts'
 import {
+  createOrder,
   deleteOrder,
+  fetchCustomers,
+  fetchInvoiceProfiles,
   fetchOrderDetail,
   fetchOrders,
+  type CreateOrderPayload,
+  type CustomerListRecord,
+  type InvoiceProfileListRecord,
   type OrderDetailRecord,
   type OrderContractSummary,
   type OrderListRecord,
@@ -18,10 +24,19 @@ import {
 
 type BooleanFilter = '' | 'true' | 'false'
 
+const orderTypeOptions = [
+  { label: '技术服务', value: 'service' },
+  { label: '代采', value: 'procurement' },
+] as const
+
 const loading = ref(false)
 const detailLoading = ref(false)
 const errorMessage = ref('')
 const detailError = ref('')
+const createDialogVisible = ref(false)
+const createSubmitting = ref(false)
+const customersLoading = ref(false)
+const invoiceProfilesLoading = ref(false)
 const editDialogVisible = ref(false)
 const editDialogLoading = ref(false)
 const editSubmitting = ref(false)
@@ -32,9 +47,12 @@ const deleteLoadingId = ref('')
 const response = ref<PagedResponse<OrderListRecord> | null>(null)
 const detail = ref<OrderDetailRecord | null>(null)
 const editingRecord = ref<OrderDetailRecord | null>(null)
+const customerOptions = ref<CustomerListRecord[]>([])
+const invoiceProfileOptions = ref<InvoiceProfileListRecord[]>([])
 const editingOrderId = ref('')
 const selectedId = ref('')
 const detailDialogVisible = ref(false)
+const createFormRef = ref<FormInstance>()
 const editFormRef = ref<FormInstance>()
 const uploadFormRef = ref<FormInstance>()
 const fileInputRef = ref<HTMLInputElement | null>(null)
@@ -53,6 +71,20 @@ const uploadForm = reactive({
   fileName: '',
 })
 
+const createForm = reactive({
+  customerId: '',
+  orderType: 'service' as 'service' | 'procurement',
+  projectName: '',
+  projectContent: '',
+  amount: 0,
+  orderDate: '',
+  remark: '',
+  isPaid: false,
+  hasContract: false,
+  hasDeliveryNote: false,
+  invoiceProfileId: '',
+})
+
 const editForm = reactive({
   projectName: '',
   projectContent: '',
@@ -63,6 +95,13 @@ const editForm = reactive({
   hasContract: false,
   hasDeliveryNote: false,
 })
+
+const createRules: FormRules<typeof createForm> = {
+  customerId: [{ required: true, message: '请选择客户。', trigger: 'change' }],
+  orderType: [{ required: true, message: '请选择订单类型。', trigger: 'change' }],
+  projectName: [{ required: true, message: '请填写项目名称。', trigger: 'blur' }],
+  amount: [{ required: true, message: '请填写订单金额。', trigger: 'blur' }],
+}
 
 const editRules: FormRules<typeof editForm> = {
   projectName: [{ required: true, message: '请填写项目名称。', trigger: 'blur' }],
@@ -81,6 +120,9 @@ const uploadRules: FormRules<typeof uploadForm> = {
 const records = computed(() => response.value?.records ?? [])
 const total = computed(() => response.value?.total ?? 0)
 const demoMode = computed(() => response.value?.demoMode ?? false)
+const selectedCustomer = computed(() => {
+  return customerOptions.value.find((item) => item.id === createForm.customerId) ?? null
+})
 
 watch(
   records,
@@ -106,6 +148,31 @@ watch(selectedId, (id) => {
 
   void loadDetail(id)
 })
+
+watch(
+  () => createForm.customerId,
+  async (customerId, previousCustomerId) => {
+    if (!createDialogVisible.value) {
+      return
+    }
+
+    if (!customerId) {
+      invoiceProfileOptions.value = []
+      createForm.invoiceProfileId = ''
+      return
+    }
+
+    if (customerId !== previousCustomerId) {
+      createForm.invoiceProfileId = ''
+    }
+
+    await loadInvoiceProfiles(customerId)
+
+    if (!createForm.invoiceProfileId) {
+      createForm.invoiceProfileId = selectedCustomer.value?.defaultInvoiceProfile?.id ?? ''
+    }
+  },
+)
 
 onMounted(() => {
   void loadPage()
@@ -179,6 +246,106 @@ function openDetailDialog(row: OrderListRecord) {
     void loadDetail(row.id)
   }
   detailDialogVisible.value = true
+}
+
+async function openCreateDialog() {
+  if (createSubmitting.value) {
+    return
+  }
+
+  resetCreateOrderForm()
+  createDialogVisible.value = true
+
+  if (customerOptions.value.length === 0) {
+    await loadCustomers()
+  }
+}
+
+function handleCreateDialogClosed() {
+  createFormRef.value?.clearValidate()
+  invoiceProfileOptions.value = []
+}
+
+async function loadCustomers(search = '') {
+  customersLoading.value = true
+
+  try {
+    const result = await fetchCustomers({
+      search: search.trim() || undefined,
+      page: 1,
+      pageSize: 100,
+    })
+    customerOptions.value = result.records
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '客户列表加载失败。')
+  } finally {
+    customersLoading.value = false
+  }
+}
+
+async function loadInvoiceProfiles(customerId: string) {
+  invoiceProfilesLoading.value = true
+
+  try {
+    const result = await fetchInvoiceProfiles({
+      customerId,
+      page: 1,
+      pageSize: 100,
+    })
+    invoiceProfileOptions.value = result.records
+  } catch (error) {
+    invoiceProfileOptions.value = []
+    ElMessage.error(error instanceof Error ? error.message : '开票资料加载失败。')
+  } finally {
+    invoiceProfilesLoading.value = false
+  }
+}
+
+async function submitCreateOrder() {
+  if (createSubmitting.value) {
+    return
+  }
+
+  const form = createFormRef.value
+  if (!form) {
+    return
+  }
+
+  const valid = await form.validate().catch(() => false)
+  if (!valid) {
+    return
+  }
+
+  createSubmitting.value = true
+
+  try {
+    const payload: CreateOrderPayload = {
+      customerId: createForm.customerId,
+      orderType: createForm.orderType,
+      projectName: createForm.projectName.trim(),
+      projectContent: createForm.projectContent.trim() || undefined,
+      amount: Number(createForm.amount),
+      isPaid: createForm.isPaid,
+      hasContract: createForm.hasContract,
+      hasDeliveryNote: createForm.hasDeliveryNote,
+      orderDate: createForm.orderDate || undefined,
+      remark: createForm.remark.trim() || undefined,
+      invoiceProfileId: createForm.invoiceProfileId || undefined,
+    }
+
+    const result = await createOrder(payload)
+    filters.page = 1
+    await loadPage()
+    selectedId.value = result.record.id
+    detail.value = result.record
+    createDialogVisible.value = false
+    detailDialogVisible.value = true
+    ElMessage.success(result.message)
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '订单创建失败。')
+  } finally {
+    createSubmitting.value = false
+  }
 }
 
 async function openEditDialog(row: Pick<OrderListRecord, 'id'>) {
@@ -437,6 +604,31 @@ function resetUploadForm() {
   uploadFormRef.value?.clearValidate()
 }
 
+function resetCreateOrderForm() {
+  createForm.customerId = ''
+  createForm.orderType = 'service'
+  createForm.projectName = ''
+  createForm.projectContent = ''
+  createForm.amount = 0
+  createForm.orderDate = todayDateValue()
+  createForm.remark = ''
+  createForm.isPaid = false
+  createForm.hasContract = false
+  createForm.hasDeliveryNote = false
+  createForm.invoiceProfileId = ''
+  invoiceProfileOptions.value = []
+  createFormRef.value?.clearValidate()
+}
+
+function todayDateValue() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date())
+}
+
 function inferContractName(fileName: string) {
   return fileName.replace(/\.[^.]+$/, '').trim()
 }
@@ -498,6 +690,15 @@ function hydrateEditForm(record: OrderDetailRecord) {
           </el-select>
 
           <div class="toolbar-actions toolbar-actions--inline">
+            <el-button
+              :icon="Plus"
+              :disabled="demoMode"
+              size="large"
+              type="primary"
+              @click="openCreateDialog"
+            >
+              新增订单
+            </el-button>
             <el-button size="large" @click="resetFilters">重置</el-button>
             <el-button :loading="loading" size="large" type="primary" @click="applyFilters">
               查询
@@ -891,6 +1092,134 @@ function hydrateEditForm(record: OrderDetailRecord) {
     </el-dialog>
 
     <el-dialog
+      v-model="createDialogVisible"
+      title="新增订单"
+      width="760px"
+      @closed="handleCreateDialogClosed"
+    >
+      <el-form
+        ref="createFormRef"
+        :model="createForm"
+        :rules="createRules"
+        label-position="top"
+      >
+        <div class="form-grid">
+          <el-form-item label="客户" prop="customerId">
+            <el-select
+              v-model="createForm.customerId"
+              :loading="customersLoading"
+              filterable
+              placeholder="选择客户"
+            >
+              <el-option
+                v-for="item in customerOptions"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+              />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="订单类型" prop="orderType">
+            <el-segmented
+              v-model="createForm.orderType"
+              :options="orderTypeOptions"
+            />
+          </el-form-item>
+
+          <el-form-item class="form-span" label="项目名称" prop="projectName">
+            <el-input
+              v-model="createForm.projectName"
+              maxlength="160"
+              placeholder="请输入订单项目名称"
+              show-word-limit
+            />
+          </el-form-item>
+
+          <el-form-item class="form-span" label="项目内容">
+            <el-input
+              v-model="createForm.projectContent"
+              :autosize="{ minRows: 4, maxRows: 8 }"
+              maxlength="2000"
+              placeholder="补充订单内容、实验范围或交付说明"
+              show-word-limit
+              type="textarea"
+            />
+          </el-form-item>
+
+          <el-form-item label="订单金额" prop="amount">
+            <el-input-number
+              v-model="createForm.amount"
+              :min="0"
+              :precision="2"
+              :step="100"
+              class="number-input"
+              controls-position="right"
+            />
+          </el-form-item>
+
+          <el-form-item label="订单日期">
+            <el-date-picker
+              v-model="createForm.orderDate"
+              placeholder="选择订单日期"
+              type="date"
+              value-format="YYYY-MM-DD"
+            />
+          </el-form-item>
+
+          <el-form-item class="form-span" label="关联开票资料">
+            <el-select
+              v-model="createForm.invoiceProfileId"
+              :disabled="!createForm.customerId"
+              :loading="invoiceProfilesLoading"
+              clearable
+              filterable
+              placeholder="不关联也可以"
+            >
+              <el-option
+                v-for="item in invoiceProfileOptions"
+                :key="item.id"
+                :label="`${item.companyName} (${item.taxNumber})`"
+                :value="item.id"
+              />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item class="form-span" label="备注">
+            <el-input
+              v-model="createForm.remark"
+              :autosize="{ minRows: 3, maxRows: 5 }"
+              maxlength="500"
+              placeholder="记录补充说明、交接信息或历史备注"
+              show-word-limit
+              type="textarea"
+            />
+          </el-form-item>
+        </div>
+
+        <div class="switch-grid">
+          <el-checkbox v-model="createForm.isPaid" label="已收款" />
+          <el-checkbox v-model="createForm.hasContract" label="已有合同" />
+          <el-checkbox v-model="createForm.hasDeliveryNote" label="已有出库单" />
+        </div>
+      </el-form>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="createDialogVisible = false">取消</el-button>
+          <el-button
+            :icon="Check"
+            :loading="createSubmitting"
+            type="primary"
+            @click="submitCreateOrder"
+          >
+            创建订单
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <el-dialog
       v-model="editDialogVisible"
       title="编辑订单"
       width="760px"
@@ -1145,7 +1474,7 @@ function hydrateEditForm(record: OrderDetailRecord) {
 
 .toolbar-actions--inline {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 140px));
+  grid-template-columns: repeat(3, minmax(0, 140px));
   grid-column: span 2;
   justify-content: flex-end;
 }
@@ -1326,6 +1655,10 @@ function hydrateEditForm(record: OrderDetailRecord) {
   .file-pill {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .toolbar-actions--inline {
+    grid-template-columns: 1fr;
   }
 }
 </style>

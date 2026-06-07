@@ -448,6 +448,12 @@ export interface SaveOrderPayload {
   remark?: string
 }
 
+export interface CreateOrderPayload extends SaveOrderPayload {
+  customerId: string
+  orderType: 'service' | 'procurement'
+  invoiceProfileId?: string
+}
+
 export function fetchCustomersOverview(limit = 6) {
   return requestJson<CrmOverviewResponse>(`/admin/customers/overview?limit=${limit}`)
 }
@@ -528,6 +534,13 @@ export function fetchOrders(query: OrderListQuery = {}) {
 
 export function fetchOrderDetail(id: string) {
   return requestJson<DetailResponse<OrderDetailRecord>>(`/admin/orders/${id}`)
+}
+
+export function createOrder(payload: CreateOrderPayload) {
+  return requestJson<MutationResponse<OrderDetailRecord>>('/admin/orders', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
 }
 
 export function updateOrder(id: string, payload: SaveOrderPayload) {

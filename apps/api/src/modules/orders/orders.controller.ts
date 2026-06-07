@@ -63,6 +63,33 @@ export class OrdersController {
     return this.ordersService.getOrderDetail(parsePositiveInt(id, 'id'));
   }
 
+  @Post()
+  create(
+    @Body() payload: Record<string, unknown>,
+    @AdminSession() session: AdminSessionUser,
+  ) {
+    return this.ordersService.createOrder({
+      customerId: parsePositiveInt(String(payload.customerId ?? ''), 'customerId'),
+      orderType: parseRequiredOrderType(payload.orderType),
+      projectName: parseRequiredText(payload.projectName, 'projectName'),
+      projectContent: parseOptionalText(payload.projectContent),
+      amount: parseAmount(payload.amount),
+      isPaid: parseRequiredBoolean(payload.isPaid, 'isPaid'),
+      hasContract: parseRequiredBoolean(payload.hasContract, 'hasContract'),
+      hasDeliveryNote: parseRequiredBoolean(
+        payload.hasDeliveryNote,
+        'hasDeliveryNote',
+      ),
+      orderDate: parseOptionalDate(payload.orderDate, 'orderDate'),
+      remark: parseOptionalText(payload.remark),
+      invoiceProfileId: parseOptionalPositiveInt(
+        payload.invoiceProfileId,
+        'invoiceProfileId',
+      ),
+      operatorUserId: parseSessionUserId(session),
+    });
+  }
+
   @Put(':id')
   update(
     @Param('id') id: string,
@@ -146,6 +173,20 @@ function parseOrderType(value?: string) {
   throw new BadRequestException('orderType 仅支持 service 或 procurement。');
 }
 
+function parseRequiredOrderType(value: unknown): OrderType {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new BadRequestException('orderType 不能为空。');
+  }
+
+  const parsed = parseOrderType(value);
+
+  if (!parsed) {
+    throw new BadRequestException('orderType 不能为空。');
+  }
+
+  return parsed;
+}
+
 function parseBooleanQuery(value: string | undefined, fieldName: string) {
   if (value === undefined || value === '') {
     return undefined;
@@ -208,6 +249,18 @@ function parsePositiveInt(value: string, fieldName: string) {
   }
 
   return parsed;
+}
+
+function parseOptionalPositiveInt(value: unknown, fieldName: string) {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+
+  if (typeof value !== 'string' && typeof value !== 'number') {
+    throw new BadRequestException(`${fieldName} 必须是正整数。`);
+  }
+
+  return parsePositiveInt(String(value), fieldName);
 }
 
 function parsePage(value?: string) {

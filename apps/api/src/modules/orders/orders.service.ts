@@ -276,6 +276,12 @@ export interface UpdateOrderPayload {
   operatorUserId?: number;
 }
 
+export interface CreateOrderPayload extends UpdateOrderPayload {
+  customerId: number;
+  orderType: OrderType;
+  invoiceProfileId?: number;
+}
+
 export interface UploadContractFileLike {
   originalname: string;
   mimetype?: string;
@@ -808,6 +814,85 @@ export class OrdersService {
         }),
         integrityFlags,
       } satisfies OrderDetailRecord,
+    };
+  }
+
+  async createOrder(payload: CreateOrderPayload) {
+    if (!this.prisma.isConfigured) {
+      throw new ServiceUnavailableException(
+        'DATABASE_URL 未配置，当前不能新增订单。',
+      );
+    }
+
+    const projectName = normalizeText(payload.projectName);
+    if (!projectName) {
+      throw new BadRequestException('projectName 不能为空。');
+    }
+
+    const customer = await this.prisma.customer.findFirst({
+      where: {
+        id: payload.customerId,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!customer) {
+      throw new NotFoundException(`未找到 ID=${payload.customerId} 的客户。`);
+    }
+
+    if (payload.invoiceProfileId !== undefined) {
+      const invoiceProfile = await this.prisma.invoiceProfile.findFirst({
+        where: {
+          id: payload.invoiceProfileId,
+          deletedAt: null,
+        },
+        select: {
+          id: true,
+          customerId: true,
+        },
+      });
+
+      if (!invoiceProfile) {
+        throw new NotFoundException(
+          `未找到 ID=${payload.invoiceProfileId} 的开票资料。`,
+        );
+      }
+
+      if (invoiceProfile.customerId !== payload.customerId) {
+        throw new BadRequestException('所选开票资料不属于当前客户。');
+      }
+    }
+
+    const created = await this.prisma.order.create({
+      data: {
+        orderNo: await this.generateOrderNo(),
+        customerId: payload.customerId,
+        orderType: payload.orderType,
+        projectName,
+        projectContent: normalizeText(payload.projectContent) ?? null,
+        amount: payload.amount,
+        hasContract: payload.hasContract,
+        hasDeliveryNote: payload.hasDeliveryNote,
+        isPaid: payload.isPaid,
+        orderDate: payload.orderDate ?? null,
+        invoiceProfileId: payload.invoiceProfileId ?? null,
+        remark: normalizeText(payload.remark) ?? null,
+        createdBy: payload.operatorUserId ?? null,
+        updatedBy: payload.operatorUserId ?? null,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const detail = await this.getOrderDetail(created.id);
+
+    return {
+      message: '订单已创建。',
+      record: detail.record,
     };
   }
 
@@ -1472,6 +1557,34 @@ export class OrdersService {
       message: '合同已上传并挂接到当前订单。',
       ...detail,
     };
+  }
+
+  private async generateOrderNo() {
+    const now = new Date();
+    const datePart = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, '0'),
+      String(now.getDate()).padStart(2, '0'),
+    ].join('');
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const randomPart = Math.random().toString(36).slice(2, 6).toUpperCase();
+      const orderNo = `SO${datePart}${randomPart}`;
+      const existing = await this.prisma.order.findFirst({
+        where: {
+          orderNo,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!existing) {
+        return orderNo;
+      }
+    }
+
+    throw new ServiceUnavailableException('订单号生成失败，请稍后重试。');
   }
 }
 
