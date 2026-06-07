@@ -12,7 +12,6 @@ import {
   EditPen,
   Link,
   Plus,
-  RefreshRight,
   Search,
   View,
 } from '@element-plus/icons-vue'
@@ -706,26 +705,7 @@ function isProcurementDetailRecord(
     />
 
     <section class="procurement-layout">
-      <PanelCard
-        class="procurement-table-panel"
-        description="统一维护锐竟、喀斯玛等平台链接，同时保留生成清单能力。"
-        title="供应商链接池"
-      >
-        <template #extra>
-          <div class="panel-extra">
-            <span class="panel-meta">{{ filteredItems.length }} / {{ items.length }}</span>
-            <el-button
-              :icon="RefreshRight"
-              :loading="loading"
-              size="large"
-              type="primary"
-              @click="loadProcurement"
-            >
-              刷新
-            </el-button>
-          </div>
-        </template>
-
+      <PanelCard class="procurement-table-panel">
         <div class="toolbar-grid">
           <el-select
             v-model="filters.platformId"
@@ -1251,18 +1231,12 @@ function isProcurementDetailRecord(
   min-width: 0;
 }
 
-.panel-extra,
 .toolbar-actions,
 .summary-block__header,
 .summary-actions,
 .product-cell,
 .row-actions {
   display: flex;
-}
-
-.panel-extra {
-  align-items: center;
-  gap: 12px;
 }
 
 .toolbar-grid {

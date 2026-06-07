@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { Check, CircleCheck, Delete, EditPen, RefreshRight, Switch, User, View } from '@element-plus/icons-vue'
+import { Check, CircleCheck, Delete, EditPen, Switch, User, View } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import PanelCard from '../components/PanelCard.vue'
@@ -442,26 +442,7 @@ function sourceTagType(sourceKey: QuotePoolRecord['sourceKey']) {
     />
 
     <section class="quotes-layout">
-      <PanelCard
-        class="quotes-table-panel"
-        description="官网报价中心、代采需求和后续迁移进来的旧后台询价，都会先汇总到这里。"
-        title="统一询价池"
-      >
-        <template #extra>
-          <div class="panel-extra">
-            <span class="panel-meta">{{ filteredRecords.length }} / {{ records.length }}</span>
-            <el-button
-              :icon="RefreshRight"
-              :loading="loading"
-              size="large"
-              type="primary"
-              @click="loadQuotePool"
-            >
-              刷新
-            </el-button>
-          </div>
-        </template>
-
+      <PanelCard class="quotes-table-panel">
         <div class="toolbar-stack">
           <div class="toolbar-group">
             <span>业务类型</span>
@@ -963,7 +944,6 @@ function sourceTagType(sourceKey: QuotePoolRecord['sourceKey']) {
   min-width: 0;
 }
 
-.panel-extra,
 .toolbar-group,
 .detail-head,
 .detail-kv,
@@ -975,7 +955,6 @@ function sourceTagType(sourceKey: QuotePoolRecord['sourceKey']) {
   display: flex;
 }
 
-.panel-extra,
 .detail-head,
 .detail-kv,
 .action-row {
