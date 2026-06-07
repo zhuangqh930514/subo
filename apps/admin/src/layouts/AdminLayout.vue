@@ -76,28 +76,6 @@ const routeMeta = computed(() => {
   }
 })
 
-const statusNote = computed(() => {
-  return route.name === 'procurement'
-    ? '必须保留：生成清单'
-    : route.name === 'quotes'
-      ? '官网/API 线索汇总'
-      : route.name === 'contracts'
-        ? '合同列表与详情核对'
-      : route.name === 'customers'
-        ? '客户、询价、订单联查'
-        : route.name === 'admin-users'
-          ? '账号、角色与关键操作日志'
-        : route.name === 'invoice-profiles'
-          ? '抬头与订单核对'
-          : route.name === 'orders'
-            ? '付款与履约进度查看'
-      : route.name === 'site-profile'
-        ? '官网公开资料配置'
-        : route.name === 'service-catalog'
-          ? '目录维护与单条编辑'
-          : '官网 + 询价 + 代采联动'
-})
-
 const visibleNavItems = computed(() => navigation.value.flatMap((group) => group.items))
 
 const actionButton = computed(() => {
@@ -223,7 +201,14 @@ async function handleLogout() {
         </div>
 
         <div class="topbar-actions">
-          <span class="status-note">{{ statusNote }}</span>
+          <el-button
+            size="large"
+            type="primary"
+            @click="router.push(actionButton.to)"
+          >
+            <el-icon><ArrowRightBold /></el-icon>
+            {{ actionButton.label }}
+          </el-button>
           <div
             v-if="userProfile"
             class="account-chip"
@@ -241,14 +226,6 @@ async function handleLogout() {
           >
             <el-icon><SwitchButton /></el-icon>
             退出
-          </el-button>
-          <el-button
-            size="large"
-            type="primary"
-            @click="router.push(actionButton.to)"
-          >
-            <el-icon><ArrowRightBold /></el-icon>
-            {{ actionButton.label }}
           </el-button>
         </div>
       </header>
@@ -439,19 +416,6 @@ async function handleLogout() {
   flex-wrap: wrap;
   gap: 12px;
   justify-content: flex-end;
-}
-
-.status-note {
-  display: inline-flex;
-  align-items: center;
-  min-height: 40px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: rgba(16, 185, 129, 0.12);
-  color: #7ef0bb;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
 }
 
 .account-chip {
