@@ -474,7 +474,7 @@ function hydrateEditForm(record: OrderDetailRecord) {
 
     <section class="orders-layout">
       <el-card shadow="never">
-        <div class="toolbar-grid toolbar-grid--stacked">
+        <div class="toolbar-grid toolbar-grid--inline">
           <el-input
             v-model="filters.search"
             clearable
@@ -497,7 +497,7 @@ function hydrateEditForm(record: OrderDetailRecord) {
             <el-option label="待收款" value="false" />
           </el-select>
 
-          <div class="toolbar-actions toolbar-actions--stacked">
+          <div class="toolbar-actions toolbar-actions--inline">
             <el-button size="large" @click="resetFilters">重置</el-button>
             <el-button :loading="loading" size="large" type="primary" @click="applyFilters">
               查询
@@ -1083,20 +1083,22 @@ function hydrateEditForm(record: OrderDetailRecord) {
   margin-bottom: 18px;
 }
 
-.toolbar-grid--stacked {
-  grid-template-columns: minmax(0, 360px);
+.toolbar-grid--inline {
+  grid-template-columns: minmax(320px, 2fr) minmax(180px, 1fr) auto auto;
 }
 
 .toolbar-actions {
   justify-content: flex-end;
 }
 
-.toolbar-actions--stacked {
+.toolbar-actions--inline {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 140px));
+  grid-column: span 2;
+  justify-content: flex-end;
 }
 
-.toolbar-actions--stacked :deep(.el-button) {
+.toolbar-actions--inline :deep(.el-button) {
   width: 100%;
   margin: 0;
 }
@@ -1240,8 +1242,13 @@ function hydrateEditForm(record: OrderDetailRecord) {
     grid-template-columns: 1fr;
   }
 
-  .toolbar-grid--stacked {
-    grid-template-columns: minmax(0, 1fr);
+  .toolbar-grid--inline {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .toolbar-actions--inline {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
   }
 }
 
